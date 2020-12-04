@@ -5,3 +5,12 @@ This project explores methods that can analyze features created in parsing the s
 
 This project will primarily use the R correspondence analysis packages "ca" and "FactoMineR".
 
+```r
+setwd("C:/Research/CorrAnal/data/")
+# funding, benthos, author
+fund <- read.table("funding.csv", header=TRUE,sep=",", row.names=1, check.names=FALSE)
+
+require(ca)
+f<-ca(fund)
+
+```
