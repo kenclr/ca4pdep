@@ -6,6 +6,7 @@ Correspondence analysis examines a contingency table, a cross-tabulation of a se
 [Example contingency table](https://github.com/kenclr/ca4pdep/blob/main/feats-cpa-above.csv)
 
 |CPA 	|cd 	|dt 	|jj 	|nn 	|nnp 	|nnps 	|nns 	|pdt 	|prp 	|vbg 	|wp
+--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
 |1(1) 	|0 	|0 	|0 	|23 	|1 	|0 	|2 	|0 	|2 	|1 	|0
 
 The table constitutes the **observed** frequency values. Expected values for the cells are then calculated. From this data, a chi-square is computed to assess the null hypothesis that there are no differences between the rows. In this case, the chi-square is 286.95 indicating that there are differences. The matrix of standardized residuals is then used to compute the singular value decomposition. Using the singular values (the eigenvalues), the correspondences can then be visualized and plotting, as in the below figure.
