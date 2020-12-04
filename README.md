@@ -12,5 +12,7 @@ fund <- read.table("funding.csv", header=TRUE,sep=",", row.names=1, check.names=
 
 require(ca)
 f<-ca(fund)
+sum(f$rowinertia) # 0.08287878 (the total inertia)
+sum(f$rowinertia)*sum(fund) # 65.97151 (the chi-square)
 
 ```
