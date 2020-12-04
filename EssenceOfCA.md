@@ -6,7 +6,7 @@ Correspondence analysis examines a contingency table, a cross-tabulation of a se
 [Example contingency table](https://github.com/kenclr/ca4pdep/blob/main/feats-cpa-above.csv)
 
 |CPA 	|cd 	|dt 	|jj 	|nn 	|nnp 	|nnps 	|nns 	|pdt 	|prp 	|vbg 	|wp
---- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
+--- | ---: | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
 |1(1) 	|0 	|0 	|0 	|23 	|1 	|0 	|2 	|0 	|2 	|1 	|0
 |2(1a) 	|0 	|2 	|0 	|8 	|0 	|0 	|2 	|0 	|2 	|0 	|0
 |3(1b) 	|0 	|0 	|0 	|10 	|1 	|0 	|0 	|0 	|2 	|0 	|0
