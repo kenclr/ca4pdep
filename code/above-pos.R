@@ -1,6 +1,7 @@
 # Locate the initial table to be analyzed 
 setwd("C:/Research/CorrAnal/data/")
-tab <- read.table("cpa-above-pos.csv", header=TRUE,sep=",", row.names=1, check.names=TRUE)
+#tab <- read.table("cpa-above-pos.csv", header=TRUE,sep=",", row.names=1, check.names=TRUE)
+tab <- read.table("feats-cpa-above.csv", header=TRUE,sep=",", row.names=1, check.names=TRUE)
 tab # print out the part-of-speech table
 
 # Open the package being used for the correspondence analysis (CA)

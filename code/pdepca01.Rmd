@@ -1,0 +1,62 @@
+---
+title: "PDEP-CA-01"
+author: "Ken Litkowski"
+date: "12/7/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## First Correspondence Analysis (CA) of a Contingency Table
+
+The first step of CA is identifies the comma-separated values file and reads that file into a table (**tab**). The table is then printed. The next code invokes the CA package, **FactoMineR**. The main function is executed in **CA(tab)** into the variable **res**. The results are then summarized.
+
+```{r}
+# Locate the initial table to be analyzed
+setwd("C:/Research/CorrAnal/data/")
+tab <- read.table("cpa-above-pos.csv", header=TRUE,sep=",", row.names=1, check.names=TRUE)
+tab # print out the part-of-speech table
+
+# Open the package being used for the correspondence analysis (CA)
+#   Execute CA into output, using the default options, including
+#   the CA factor map plot which locates the senses and the parts
+#   of speech
+library(FactoMineR)
+res <- CA(tab)
+```
+
+```{r}
+# Summarizes the results from the CA. Note that the first line
+#   identifies the chi-square value. The summary next identifies
+#   the eigenvalues resulting from the singular value decomposition
+#   of the table, particularly showing the variance for each
+#   dimension. The total inertia (the sum of the variances)
+#   is 1.253063. Next, the details for each row and each column
+#   are listed. The first column of each group ("Iner1000")
+#   shows the inertia, permils (parts per thousand), indicating
+#   that senses 10(n), 9(3), and 7(2c) and the parts of speech
+#   "dt", "nn", "cd", and "vbg" account for the greatest variances.
+#   The next columns of the summary show the dimensions and where
+#   they should be located in the CA factor map. Specifically,
+#   the values for "Dim.1" and "Dim.2" indicate where each row
+#   (the senses) and each column (parts of speech) located on the
+#   map. Finally, the percentages of variances for the two axes
+#   "Dim 1" and "Dim 2" are given in the parentheses. 
+summary(res)
+```
+
+```{r}
+# As described above, several senses and parts of speech were
+#   indicated as contributing the heavier levels of the inertias.
+#   These parts of the tables were removed, enabling more clarity
+#   of the original blobs of the factor maps.
+tab1 <- tab[-10,-8]
+res1 <- CA(tab1)
+tab2 <- tab1[-7,-9]
+res2 <- CA(tab2)
+tab3 <- tab2[,-c(3,9)]
+res3 <- CA(tab3)
+summary(res3)
+```
