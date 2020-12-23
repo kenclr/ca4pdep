@@ -1,0 +1,491 @@
+---
+title: "Simple Correspondence Analysis Using R"
+author: "Ken Litkowski"
+date: "12/20/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Overview
+
+This R Markdown document lists a general set of steps for demonstrating the correspondence analysis (CA) of a contingency table consisting of two categories for corpus features: a list of senses and the parts of speech for the complements of the preposition **above**. This example is part of a research project containing this set of steps and [further efforts](#summary-and-future-efforts) (see Litkowski[^litk] for current work). 
+
+[^litk]: Litkowski, Ken. (2020, December). Preposition Analysis Using Correspondence Analysis. Working Paper 20-02. Damascus, MD: CL Research. (See http://www.clres.com/online-papers/ca4pdep.pdf, the working paper at https://www.overleaf.com/read/vzrkqvpdhxpc, and the GitHub development at https://github.com/kenclr/ca4pdep)
+
+The steps below are essentially identical from <http://www.sthda.com/english/articles/31-principal-component-methods-in-r-practical-guide/113-ca-correspondence-analysis-in-r-essentials/>. While the same steps have been followed below, the discussion describes interpretations for semantic similarities of the senses and the parts of speech.
+
+Contents:
+
+- [Computation](#computation)
+  - [R packages](#r-packages)
+  - [Data format](#data-format)
+  - [Graph of contingency tables and chi-square test](#graph-of-contingency-tables-and-chi-square-test)
+  - [R code to compute CA](#r-code-to-compute-ca)
+
+- [Visualization and interpretation](#visualization-and-interpretation)
+  - [Statistical significance](#statistical-significance)
+  - [Eigenvalues / Variances](#eigenvalues-variances)
+  - [Biplot](#biplot)
+  - [Graph of row variables](#graph-of-row-variables)
+  - [Graph of column variables](#graph-of-column-variables)
+  - [Biplot options](#biplot-options)
+  - [Dimension description](#dimension-description)
+  
+- [Summary and Future Efforts](#summary-and-future-efforts)
+- [Footnotes](#footnotes)
+
+## Computation
+### R packages
+Several packages are available in R for computing correspondence analysis (as listed in the above link). Below, this uses the *FactoMineR* package for the analysis and *factoextra* package for plotting the results. To get these packages, use:
+```{}
+# Install these if you otherwise don't have them
+install.packages(c("FactoMineR", "factoextra"))
+```
+Load the packages:
+```{r}
+library("FactoMineR")
+library("factoextra")
+```
+
+### Data format
+The data should be a contingency table. The first steps below are local to get the data, so you need to do this to follow the further steps. The data is available at <https://github.com/kenclr/ca4pdep>. Senses[^1], Parts of Speech[^2]
+```{r}
+# Locate the initial table to be analyzed
+setwd("C:/Research/CorrAnal/data/")
+tab <- read.table("cpa-above-pos.csv", header=TRUE,sep=",", row.names=1, check.names=TRUE)
+tab # print out the part-of-speech table
+```
+[^1]: Senses: 1(1) in extended space over and not touching; 2(1a) extending upwards over, 3(1b) higher than and to one side of; overlooking; 4(2) at a higher level or layer than; 5(2a) higher in grade or rank than; 6(2b) considered of higher status or worth than, too good for; 7(2c) in preference to; 8(2d) at a higher volume or pitch than; 9(3) higher than (a specified amount, rate, or norm); 10(n) more so than anything else
+
+[^2]: Parts of Speech: cd (cardinal number), dt (determiner), jj (adjective), nn (noun (sing. or mass), nnp (proper noun, singular), nnps (proper noun, plural), nns (noun (plu.), pdt (predeterminer), prp (personal pronoun), vbg (verb, gerund or present participle), wp (wh-pronoun)
+
+### Graph of contingency tables and chi-square test
+The above *contingency table* is not very large. Therefore, it's easy to visually inspect and interpret the row and column profiles:
+
+- It's evident that senses __9(3)__, __10(n)__, and __7(2c)__ are distinctive
+- The primary part of speech is __nn__; __cd__ and __dt__ are significant for specific senses; __prp__ and __wp__ are very seldom.
+
+For a small contingency table, you can use the chi-square test to evaluate whether there is a significant dependence between row and column categories:
+
+```{r}
+chisq <- chisq.test(tab)
+chisq
+```
+
+In this case, the row and the column variables are statistically significantly associated (p-value = ```r chisq$p.value```). The fact that the approximation may be incorrect is likely because many cells that have very low instances.
+
+### R code to compute CA
+The function <span style="color:red">CA()</span>[*FactoMineR* package] can be used. A simplified format is:
+
+`CA(X, ncp = 5, graph = TRUE)`
+
+where
+
+- X: a data frame (contingency table)
+- ncp: number of dimensions kept in the final results
+- graph: a default logical value, if TRUE, a graph is displayed
+
+To compute correspondence analysis, type this:
+
+```{r}
+res.ca <- CA(tab, graph = FALSE)
+```
+
+The output of the function CA() is a list including :
+```{r}
+print(res.ca)
+```
+
+The object that is created using the function CA() contains many information found in many different lists and matrices. These values are described in the next section.
+
+## Visualization and interpretation
+The following functions [in __factoextra__] help in the interpretation and the visualization of the correspondence analysis:
+
+- <span style="color:red">get_eigenvalue(res.ca)</span>: Extract the eigenvalues/variances retained by each dimension (axis)
+- <span style="color:red">fviz_eig(res.ca)</span>: Visualize the eigenvalues
+- <span style="color:red">get_ca_row(res.ca)</span>, <span style="color:red">get_ca_col(res.ca)</span>: Extract the results for rows and columns, respectively.
+- <span style="color:red">fviz_ca_row(res.ca)</span>, <span style="color:red">fviz_ca_col(res.ca)</span>: Visualize the results for rows and columns, respectively.
+- <span style="color:red">fviz_ca_biplot(res.ca)</span>: Make a biplot of rows and columns.
+
+### Statistical significance
+To interpret correspondence analysis, the first step is to evaluate whether there is a significant dependency between the rows and columns. A rigorous method is to use the <span style="color:red">chi-square statistic</span> for examining the association between row and column variables. This appears at the top of the report generated by the function `summary(res.ca)` or `print(res.ca)`. In this case, the association is highly significant (chi-square: 286.95, p=2.090945e-22.
+
+```{r}
+# Chi-square statistics
+chi2 <- 286.95
+# Degree of freedom
+df <- (nrow(tab) - 1) * (ncol(tab) - 1)
+# P-value
+pval <- pchisq(chi2, df = df, lower.tail = FALSE)
+pval
+```
+
+### Eigenvalues / Variances
+Recall that, we examine the eigenvalues to determine the number of axis to be considered. The eigenvalues and the proportion of variances retained by the different axes can be extracted using the function <span style="color:red">get_eigenvalue()</span> [*factoextra* package]. Eigenvalues are large for the first axis and small for the subsequent axis.
+
+```{r}
+eig.val <- get_eigenvalue(res.ca)
+eig.val
+```
+
+*Eigenvalues* correspond to the amount of information retained by each axis. Dimensions are ordered decreasingly and listed according to the amount of variance explained in the solution. Dimension 1 explains the most variance in the solution, followed by dimension 2 and so on.
+
+The cumulative percentage explained is obtained by adding the successive proportions of variation explained to obtain the running total. For instance, 59.7% plus 17.7% equals 77.4%, and so forth. Therefore, about 77.4% of the variation is explained by the first two dimensions.
+
+Eigenvalues can be used to determine the number of axes to retain. There is no “rule of thumb” to choose the number of dimensions to keep for the data interpretation. It depends on the research question and the researcher’s need. For example, if you are satisfied with 80% of the total variances explained then use the number of dimensions necessary to achieve that.
+
+Note that a good dimension reduction is achieved when the the first few dimensions account for a large proportion of the variability. In our analysis, the first two axes explain 77.4% of the variation.[^3] This is an acceptably large percentage.
+
+[^3]: In the source, their example explained 88%, so this is somewhat better.
+
+An alternative method to determine the number of dimensions is to look at a Scree Plot, which is the plot of eigenvalues/variances ordered from largest to the smallest. The number of component is determined at the point, beyond which the remaining eigenvalues are all relatively small and of comparable size.
+
+The scree plot can be produced using the function <span style="color:red">fviz_eig()</span> or <span style="color:red">fviz_screeplot()</span> [*factoextra* package].
+
+```{r}
+fviz_screeplot(res.ca, addlabels = TRUE, ylim = c(0, 50))
+```
+
+It’s also possible to calculate an average eigenvalue above which the axis should be kept in the solution. Our data contains 10 rows and 11 columns. If the data were random, the expected value of the eigenvalue for each axis would be `1/(nrow(tab)-1) = 1/9 = 11.11%` in terms of rows. Likewise, the average axis should account for `1/(ncol(tab)-1) = 1/10 = 10%` in terms of the 11 columns. Any axis with a contribution larger than the maximum of these two percentages should be considered as important and included in the solution for the interpretation of the data. The R code below, draws the scree plot with a red dashed line specifying the average eigenvalue:
+
+```{r}
+fviz_screeplot(res.ca) +
+ geom_hline(yintercept=33.33, linetype=2, color="red")
+```
+
+According to the graph above, only dimension 1 should be used in the solution. The dimensions 2 and 3 explains only 17.7% and 12.4% of the total inertia which is below the average eigeinvalue (33.33%) and too little to be kept for further analysis.
+
+### Biplot
+The function <span style="color:red">fviz_ca_biplot()</span> [*factoextra* package] can be used to draw the biplot of rows and columns variables.
+
+```{r}
+# repel= TRUE to avoid text overlapping (slow if many points)
+fviz_ca_biplot(res.ca, repel = TRUE)
+```
+The graph above is called *symmetric plot* and shows a global pattern within the data. Rows are represented by blue points and columns by red triangles. The distance between any row points or column points gives a measure of their similarity (or dissimilarity). Row points with similar profile are closed on the factor map. The same holds true for column points.
+
+```Note
+- Symmetric plot represents the row and column profiles simultaneously in a common space. In this case, only the distance between row points or the distance between column points can be really interpreted.
+- The distance between any row and column items is not meaningful! You can only make a general statements about the observed pattern.
+- In order to interpret the distance between column and row points, the column profiles must be presented in row space or vice-versa. This type of map is called asymmetric biplot and is discussed at the end of this article. 
+```
+
+### Graph of row variables
+The next step for the interpretation is to determine which row and column variables contribute the most in the definition of the different dimensions retained in the model.
+
+#### Results
+The function <span style="color:red">get_ca_row()</span> [in *factoextra*] is used to extract the results for row variables. This function returns a list containing the coordinates, the cos2, the contribution and the inertia of row variables:
+
+```{r}
+row <- get_ca_row(res.ca)
+row
+```
+The components of the <span style="color:red">get_ca_row()</span> function can be used in the plot of rows as follow:
+
+- <span style="color:red">row$coord</span>: coordinates of each row point in each dimension (1, 2 and 3). Used to create the scatter plot.
+- <span style="color:red">row$cos2</span>: quality of representation of rows.
+- <span style="color:red">row$contrib</span>: contribution of rows (in %) to the definition of the dimensions.
+- <span style="color:red">row$inertia</span>: the inertia for each row, the sum of which is equal to the sum of the eigenvalues (i.e., the total inertia).
+
+Note that, it’s possible to plot row points and to color them according to either i) their quality on the factor map (cos2) or ii) their contribution values to the definition of dimensions (contrib).
+
+The different components can be accessed as follow:
+
+```
+# Coordinates
+head(row$coord)
+# Cos2: quality on the factor map
+head(row$cos2)
+# Contributions to the principal components
+head(row$contrib)
+```
+
+Note that the sum of the eigenvalues is equal to the sum of the row inertias. This is the *total inertia* for the table. 
+```{r}
+# the sum of the eigenvalues
+eig.val[,1]
+sum(eig.val[,1])
+# the sum of the row inertias
+row$inertia
+sum(row$inertia)
+# the portion of each row out of the total inertia
+row$inertia/sum(row$inertia)
+# as permills
+round(row$inertia/sum(row$inertia)*1000, digits=0)
+```
+
+In this section, we describe how to visualize row points only. Next, we highlight rows according to either i) their quality of representation on the factor map or ii) their contributions to the dimensions.
+
+#### Coordinates of row points
+The R code below displays the coordinates of each row point in each dimension (1, 2 and 3):
+
+```{r}
+head(row$coord)
+```
+
+Use the function <span style="color:red">fviz_ca_row()</span> [in *factoextra*] to visualize only row points:
+
+```{r}
+fviz_ca_row(res.ca, repel = TRUE)
+```
+
+The plot above shows the relationships between row points:
+
+- Rows with a similar profile are grouped together.
+- Negatively correlated rows are positioned on opposite sides of the plot origin (opposed quadrants).
+- The distance between row points and the origin measures the quality of the row points on the factor map. Row points that are away from the origin are well represented on the factor map.
+
+#### Quality of representation of rows
+The result of the analysis shows that, the contingency table has been successfully represented in low dimension space using correspondence analysis. The two dimensions 1 and 2 are sufficient to retain 77.4% of the total inertia (variation) contained in the data. However, not all the points are equally well displayed in the two dimensions. Recall that, the *quality of representation* of the rows on the factor map is called the *squared cosine* (cos2) or the squared correlations. The cos2 measures the degree of association between rows/columns and a particular axis. The cos2 of row points can be extracted as follow:
+
+```{r}
+head(row$cos2, 10)
+```
+
+The values of the cos2 are comprised between 0 and 1. The sum of the cos2 for rows on all the CA dimensions is equal to one. The quality of representation of a row or column in n dimensions is simply the sum of the squared cosine of that row or column over the n dimensions. If a row item is well represented by two dimensions, the sum of the cos2 is closed to one. For some of the row items, more than 2 dimensions are required to perfectly represent the data.
+
+It’s possible to color row points by their cos2 values using the argument col.row = "cos2". This produces a gradient colors, which can be customized using the argument gradient.cols. For instance, gradient.cols = c("white", "blue", "red") means that:
+
+- variables with low cos2 values will be colored in “white”
+- variables with mid cos2 values will be colored in “blue”
+- variables with high cos2 values will be colored in red
+
+```{r}
+# Color by cos2 values: quality on the factor map
+fviz_ca_row(res.ca, col.row = "cos2",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), 
+             repel = TRUE)
+```
+
+You can visualize the cos2 of row points on all the dimensions using the *corrplot* package:
+
+```{r}
+library("corrplot")
+corrplot(row$cos2, is.corr=FALSE)
+```
+
+It’s also possible to create a bar plot of rows cos2 using the function <span style="color:red">fviz_cos2()</span> [in *factoextra*]:
+
+```{r}
+# Cos2 of rows on Dim.1 and Dim.2
+fviz_cos2(res.ca, choice = "row", axes = 1:2)
+```
+
+Note that, only the first 4 row points (senses) are well represented by the first two dimensions. The next 5 row points are not strongly represented. The last (sense 7(2c)) should be interpreted with some caution. A higher dimensional solution is probably necessary for the last 6 senses.
+
+#### Contributions of rows to the dimensions
+The contribution of rows (in %) to the definition of the dimensions can be extracted as follow:
+
+```{r}
+head(row$contrib, 10)
+```
+
+The row variables with the larger value, contribute the most to the definition of the dimensions.
+
+- Rows that contribute the most to Dim.1 and Dim.2 are the most important in explaining the variability in the data set.
+- Rows that do not contribute much to any dimension or that contribute to the last dimensions are less important.
+
+It’s possible to use the function <span style="color:red">corrplot()</span> [*corrplot* package] to highlight the most contributing row points for each dimension:
+
+```{r}
+library("corrplot")
+corrplot(row$contrib, is.corr=FALSE)
+```
+
+The function <span style="color:red">fviz_contrib()</span> [*factoextra* package] can be used to draw a bar plot of row contributions. If your data contains many rows, you can decide to show only the top contributing rows. The R code below shows the top 10 rows contributing to the dimensions:
+
+```{r}
+# Contributions of rows to dimension 1
+fviz_contrib(res.ca, choice = "row", axes = 1, top = 10)
+# Contributions of rows to dimension 2
+fviz_contrib(res.ca, choice = "row", axes = 2, top = 10)
+```
+
+The total contribution to dimension 1 and 2 can be obtained as follow:
+
+```{}
+# Total contribution to dimension 1 and 2
+fviz_contrib(res.ca, choice = "row", axes = 1:2, top = 10)
+```
+
+The red dashed line on the graph above indicates the expected average value, if the contributions were uniform, i.e., the calculation of the expected contribution value under the null hypothesis. The most important (or, contributing) row points can be highlighted on the scatter plot as follow:
+
+```{r}
+fviz_ca_row(res.ca, col.row = "contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), 
+             repel = TRUE)
+```
+
+The scatter plot gives an idea of what pole of the dimensions the row categories are actually contributing to. It is evident that sense 10(n) has an important contribution to the positive pole of the first dimension, while the other senses have a major contribution to the negative pole of the first dimension. Analysis of these plots are primarily used to determine the opposition of positive pole and the negative pole.
+
+### Graph of column variables
+#### Results
+The function <span style="color:red">get_ca_col()</span> [in *factoextra*] is used to extract the results for column variables. This function returns a list containing the coordinates, the cos2, the contribution and the inertia of columns variables:
+
+```{r}
+col <- get_ca_col(res.ca)
+col
+```
+
+The result for columns gives the same information as described for rows. For this reason, we’ll just displayed the result for columns in this section with only a very brief comment.
+
+To get access to the different components, use this:
+
+```{}
+# Coordinates of column points
+head(col$coord)
+# Quality of representation
+head(col$cos2)
+# Contributions
+head(col$contrib)
+```
+
+#### Plots: quality and contribution
+The <span style="color:red">fviz_ca_col()</span> is used to produce the graph of column points. To create a simple plot, type this:
+
+```{}
+fviz_ca_col(res.ca)
+```
+
+Like row points, it’s also possible to color column points by their cos2 values:
+
+```{r}
+fviz_ca_col(res.ca, col.col = "cos2", 
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE)
+```
+
+The R code below creates a barplot of columns cos2:
+
+```{r}
+fviz_cos2(res.ca, choice = "col", axes = 1:2)
+```
+
+Recall that, the value of the cos2 is between 0 and 1. A cos2 closed to 1 corresponds to a column/row variables that are well represented on the factor map. Note that the parts of speech "nns", "prp", "vbg", and "nnp" are not very well displayed on the first two dimensions. The position of these items must be interpreted with caution in the space formed by dimensions 1 and 2.
+
+To visualize the contribution of rows to the first two dimensions, type this:
+
+```{r}
+fviz_contrib(res.ca, choice = "col", axes = 1:2)
+```
+
+### Biplot options
+**Biplot** is a graphical display of rows and columns in 2 or 3 dimensions. We have [already described](#biplot) how to create CA biplots. Here, we’ll describe different types of CA biplots.
+
+#### Symmetric biplot
+
+As mentioned above, the standard plot of correspondence analysis is a symmetric biplot in which both rows (blue points) and columns (red triangles) are represented in the same space using the <span style="color:red">principal coordinates</span>. These coordinates represent the row and column profiles. In this case, only the distance between row points or the distance between column points can be really interpreted. With a symmetric plot, the inter-distance between rows and columns can’t be interpreted. Only a general statements can be made about the pattern.
+
+```{r}
+fviz_ca_biplot(res.ca, repel = TRUE)
+```
+
+#### Asymmetric biplot
+Note that, in order to interpret the distance between column points and row points, the simplest way is to make an asymmetric plot. This means that, the column profiles must be presented in row space or vice-versa.
+
+To make an asymetric biplot, rows (or columns) points are plotted from the standard co-ordinates (S) and the profiles of the columns (or the rows) are plotted from the principal coordinates (P).
+
+For a given axis, the standard and principap co-ordinates are related as follows:
+
+<span style="color:red">P = sqrt(eigenvalue) X S</span>
+- <span style="color:red">P</span>: the principal coordinate of a row (or a column) on the axis
+- <span style="color:red">eigenvalue</span>: the eigenvalue of the axis
+
+Depending on the situation, other types of display can be set using the argument <span style="color:red">map</span> (Nenadic and Greenacre 2007) in the function <span style="color:red">fviz_ca_biplot()</span> [in *factoextra*].
+
+The allowed options for the argument <span style="color:red">map</span> are:
+
+1. <span style="color:red">"rowprincipal"</span> or <span style="color:red">"colprincipal"</span> - these are the so-called <span style="color:red">asymmetric biplots</span>, with either rows in principal coordinates and columns in standard coordinates, or vice versa (also known as row-metric-preserving or column-metric-preserving, respectively).
+    - <span style="color:red">"rowprincipal"</span>: columns are represented in row space
+    - <span style="color:red">"colprincipal"</span>: rows are represented in column space
+2. <span style="color:red">"symbiplot"</span> - both rows and columns are scaled to have variances equal to the singular values (square roots of eigenvalues), which gives a <span style="color:red">symmetric biplot</span> but does not preserve row or column metrics.
+3. <span style="color:red">"rowgab"</span> or <span style="color:red">"colgab"</span>: <span style="color:red">Asymetric maps</span> proposed by Gabriel & Odoroff (Gabriel and Odoroff 1990):
+    - <span style="color:red">"rowgab"</span>: rows in principal coordinates and columns in standard coordinates multiplied by the mass.
+    - <span style="color:red">"colgab"</span>: columns in principal coordinates and rows in standard coordinates multiplied by the mass.
+4. <span style="color:red">"rowgreen"</span> or <span style="color:red">"colgreen"</span>: The so-called <span style="color:red">contribution biplots</span> showing visually the most contributing points (Greenacre 2006b).
+    - <span style="color:red">"rowgreen"</span>: rows in principal coordinates and columns in standard coordinates multiplied by square root of the mass.
+    - <span style="color:red">"colgreen"</span>: columns in principal coordinates and rows in standard coordinates multiplied by the square root of the mass.
+
+The R code below draws a standard *asymmetric biplot*:
+
+```{r}
+fviz_ca_biplot(res.ca, 
+               map ="rowprincipal", arrow = c(TRUE, TRUE),
+               repel = TRUE)
+```
+
+We used, the argument arrows, which is a vector of two logicals specifying if the plot should contain points (FALSE, default) or arrows (TRUE). The first value sets the rows and the second value sets the columns. If the angle between two arrows is acute, then their is a strong association between the corresponding row and column. To interpret the distance between rows and and a column you should perpendicularly project row points on the column arrow.
+
+#### Contribution biplot
+In the standard [symmetric biplot](#symmetric-biplot) (mentioned in the previous section), it’s difficult to know the most contributing points to the solution of the CA.
+
+Michael Greenacre proposed a new scaling displayed (called contribution biplot) which incorporates the contribution of points ([M. Greenacre](#greenacre) 2013). In this display, points that contribute very little to the solution, are close to the center of the biplot and are relatively unimportant to the interpretation.
+
+A contribution biplot can be drawn using the argument map = “rowgreen” or map = “colgreen”.
+
+Firstly, you have to decide whether to analyse the contributions of rows or columns to the definition of the axes.
+
+In our example we’ll interpret the contribution of rows to the axes. The argument map ="colgreen" is used. In this case, recall that columns are in principal coordinates and rows in standard coordinates multiplied by the square root of the mass. For a given row, the square of the new coordinate on an axis i is exactly the contribution of this row to the inertia of the axis i.
+
+```{r}
+fviz_ca_biplot(res.ca, map ="colgreen", arrow = c(TRUE, FALSE),
+               repel = TRUE)
+```
+
+In the graph above, the position of the column profile points is unchanged relative to that in the conventional biplot. However, the distances of the row points from the plot origin are related to their contributions to the two-dimensional factor map.
+
+The closer an arrow is (in terms of angular distance) to an axis the greater is the contribution of the row category on that axis relative to the other axis. If the arrow is halfway between the two, its row category contributes to the two axes to the same extent.
+
+### Dimension description
+To easily identify row and column points that are the most associated with the principal dimensions, you can use the function <span style="color:red">dimdesc()</span> [in *FactoMineR*]. Row/column variables are sorted by their coordinates in the <span style="color:red">dimdesc()</span> output.
+
+```{r}
+# Dimension description
+res.desc <- dimdesc(res.ca, axes = c(1,2))
+```
+
+Description of dimension 1:
+```{r}
+# Description of dimension 1 by row points
+head(res.desc[[1]]$row, 4)
+```
+
+```{r}
+# Description of dimension 1 by column points
+head(res.desc[[1]]$col, 4)
+```
+
+Description of dimension 2:
+
+```{}
+# Description of dimension 2 by row points
+res.desc[[2]]$row
+# Description of dimension 1 by column points
+res.desc[[2]]$col
+```
+
+## Summary and Future Efforts
+We described how to perform and interpret a first instance of correspondence analysis (CA). We computed CA using the <span style="color:red">CA(</span>) function [*FactoMineR* package]. Next, we used the *factoextra* R package to produce visualization of the CA results.
+
+There are many elaborations that are available from the basic CA.
+
+- Some of the senses and parts-of-speech are clearly outliers. After concluding their properties and removing them from the analysis, the remaining senses and parts of speech make it possible to increase the distinctions, expanding the blobs.
+
+- Looking just at the parts of speech for a set of senses does not incorporate the many additional feature characters that are available from the initial contingency table. The packages used above contains the capability for adding and combining features that can be analyzed with qualitative lexicographic perspectives.
+
+- The contingency tables conflate the instances that comprise them. With multiple correspondence analysis, each instance can be characterized with the variety of features that may appear to be relevant with the CA.
+
+- The contingency table used here was based on a random corpus. Rather than this, other contingency tables can be generated from the Oxford English Corpus (OEC). This can be used a reference corpus and can be used to assess other instances. Most of the CA packages provide a capability for view other instances, used characterized as supplementary rows or columns. These supplements can be assessed against the other reference corpora.
+
+- In the basic data for the sense tagging, potential substitutable prepositions have been identified. These possible substitutes can be examined with the idea that the null hypotheses that have similar senses.
+
+- Many senses have been characterized with supersenses (clusters or relations). With other corpus instances, the supersenses and other senses can be examined with reference corpora.
+
+- The tagging of individual instances can be assessed against whatever sets of features have been characterized as similar, enabling a more quantitative CA test.
+
+CA provides a rich set of potential set of techniques that can be analyzed for semantic similarities.
+
+### Footnotes
