@@ -12,5 +12,6 @@ Files
 
 Most of the code files use R. The code in each can be executed if you use RStudio. In addition, these *.Rmd files were "knit" via RStudio, creating HTML files that show the output of the executions.
 
-- PDEP-CA-01: Cross-Tabulation of PDEP Features (Section 2) - Showing how an initial contingency is generated, characterizing how to interpret the major parts of correspondence analysis. (https://www.clres.com/ca/pdepca01.html)
+- PDEP-CA-01.Rmd: Cross-Tabulation of PDEP Features (Section 2) - Showing how an initial contingency is generated, characterizing how to interpret the major parts of correspondence analysis. (https://www.clres.com/ca/pdepca01.html)
+- PDEP-CA-01a.Rmd: Toy demo for correspondence analysis, using the same data as in the previous code, following an online description that provides a comprehensive example. (https://www.clres.com/ca/pdepca01a.html)
 - PDEP-CA-02: Instance Analysis (Section 3)
