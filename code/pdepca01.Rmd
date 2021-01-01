@@ -1,5 +1,5 @@
 ---
-title: "PDEP-CA-01"
+title: "Initial Cross-Tabulation of PDEP Features"
 author: "Ken Litkowski"
 date: "12/7/2020"
 output: html_document
@@ -11,47 +11,47 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## First Correspondence Analysis (CA) of a Contingency Table
 
-The first step of CA is identifies the comma-separated values file and reads that file into a table (**tab**). The table is then printed. The next code invokes the CA package, **FactoMineR**. The main function is executed in **CA(tab)** into the variable **res**. The results are then summarized.
+The first step of CA is identifies the comma-separated values file and reads that file into a [table](#table-for-above) (**tab**). The table is then printed. The next code invokes the CA package, **FactoMineR**. The main function is executed in **CA(tab)** into the variable **res**. The results are then summarized.
 
+### Table for Above
+This table provides the parts of speech[^parts] for the PDEP senses[^senses] of _above_ from the CPA corpus. There were 250 instances in the corpus, but only 229 were prepositions and the remaining 21 were adverbs.
+
+[^senses]: 1(1) in extended space over and not touching; 2(1a) extending upwards over, 3(1b) higher than and to one side of; overlooking; 4(2) at a higher level or layer than; 5(2a) higher in grade or rank than; 6(2b) considered of higher status or worth than, too good for; 7(2c) in preference to; 8(2d) at a higher volume or pitch than; 9(3) higher than (a specified amount, rate, or norm); 10(n) more so than anything else
+
+[^parts]: cd (cardinal number), dt (determiner), jj (adjective), nn (noun (sing. or mass), nnp (proper noun, singular), nnps (proper noun, plural), nns (noun (plu.), pdt (predeterminer), prp (personal pronoun), vbg (verb, gerund or present participle), wp (wh-pronoun)
 ```{r}
 # Locate the initial table to be analyzed
 setwd("C:/Research/CorrAnal/data/")
 tab <- read.table("cpa-above-pos.csv", header=TRUE,sep=",", row.names=1, check.names=TRUE)
 tab # print out the part-of-speech table
+```
 
-# Open the package being used for the correspondence analysis (CA)
-#   Execute CA into output, using the default options, including
-#   the CA factor map plot which locates the senses and the parts
-#   of speech
+### Initial Plot of Factor Map for the Table
+To perform the correspondence analysis in R, the package **FactoMineR** is first opened. The function **CA(tab)** is then executed, which uses several default values (including a default to generate a factor map plot that locates the senses and the parts of speech). The results of the function are set to the variable **res**, for further examination.
+```{r}
 library(FactoMineR)
 res <- CA(tab)
 ```
 
+### Summarizing the Results
+The results can be displayed with the function **summary(res)**. The first lines show what CA() was called (i.e., setting X to **tab**). The next line identifies the chi-square of independence between the two variables, in this case indicating that the variables are independent.
+
+The summary next lists the eigenvalues that resulted from the singular value decomposition (SVD) of the table, particularly showing the variance for each of the dimensions[^dim]. For each dimension, the summary identifies the percentage of the variance; for the first two, the two axes are labeled with the percentages.
+
+[^dim]: The number of dimensions is equal to one fewer than the number of columns in the [table](#table-for-above). 
+
+The sum of the variances for the eigenvalues is the (total) inertia for the table. In this case, the inertia is 1.253063. An important factor in correspondence analysis is the attribution of the portions of the inertia for the rows, the columns, and the individual instances that comprise the cells of the table.
+
+The next portions of the summary results details the properties of the rows (the senses) and the columns (the parts of speech). The first column of each summary (**Iner\*1000**) is the inertia, in permills (parts per thousand). The sum of these inertia values is the total inertia. From inspection at these inertias (as well as their locations in the [plot above](#initial-plot-of-factor-map-for-the-table)), senses 10(n), 9(3), and 7(2c) and the parts of speech "dt", "nn", "cd", and "vbg" account for the greatest variances.
+
+The next columns of the summary (under "Dim.1" and "Dim.2") provide the coordinates for the senses and the parts of speech and where they are located in the CA factor map.
 ```{r}
-# Summarizes the results from the CA. Note that the first line
-#   identifies the chi-square value. The summary next identifies
-#   the eigenvalues resulting from the singular value decomposition
-#   of the table, particularly showing the variance for each
-#   dimension. The total inertia (the sum of the variances)
-#   is 1.253063. Next, the details for each row and each column
-#   are listed. The first column of each group ("Iner1000")
-#   shows the inertia, permils (parts per thousand), indicating
-#   that senses 10(n), 9(3), and 7(2c) and the parts of speech
-#   "dt", "nn", "cd", and "vbg" account for the greatest variances.
-#   The next columns of the summary show the dimensions and where
-#   they should be located in the CA factor map. Specifically,
-#   the values for "Dim.1" and "Dim.2" indicate where each row
-#   (the senses) and each column (parts of speech) located on the
-#   map. Finally, the percentages of variances for the two axes
-#   "Dim 1" and "Dim 2" are given in the parentheses. 
 summary(res)
 ```
 
+### Removing Rows and Columns
+As described [above}(#summarizing-the-results), several senses and parts of speech were indicated as contributing the heavier levels of the inertias. These parts of the tables were removed, enabling more clarity of the original blobs of the factor maps. These removals have been performed incrementally to demonstrate how the analysis can be modified. The first removed sense "10(n)" and part of speech "pdt" (removing the row would leave the column which would make the table degenerate); this reduced the chi-square to 96.46. The second removed sense "7(2c)" and part of speech "vbg"; this reduced the chi-square to 68.49. The third removed the parts of speech "jj" and "wp"; this removed the chi-square to 65.68. The net effect of these removals was to distinguish the remaining senses and parts of speech.
 ```{r}
-# As described above, several senses and parts of speech were
-#   indicated as contributing the heavier levels of the inertias.
-#   These parts of the tables were removed, enabling more clarity
-#   of the original blobs of the factor maps.
 tab1 <- tab[-10,-8]
 res1 <- CA(tab1)
 tab2 <- tab1[-7,-9]
