@@ -11,7 +11,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## First Correspondence Analysis (CA) of a Contingency Table
 
-The first step of CA is identifies the comma-separated values file and reads that file into a [table](#table-for-above) (**tab**). The table is then printed. The next code invokes the CA package, **FactoMineR**. The main function is executed in **CA(tab)** into the variable **res**. The results are then summarized.
+The first step of CA is identifies the comma-separated values file and reads that file into a [table](#table-for-above) (**tab**). The table is then printed. The next code invokes the CA package, **FactoMineR**. The main function is executed in **CA(tab)** into the variable **res**. The results are then summarized. (See Litkowski[^litk] for current work). 
+
+[^litk]: Litkowski, Ken. (2020, December). Preposition Analysis Using Correspondence Analysis. Working Paper 20-02. Damascus, MD: CL Research. (See http://www.clres.com/online-papers/ca4pdep.pdf, the working paper at https://www.overleaf.com/read/vzrkqvpdhxpc, and the GitHub development at https://github.com/kenclr/ca4pdep)
 
 ### Table for Above
 This table provides the parts of speech[^parts] for the PDEP senses[^senses] of _above_ from the CPA corpus. There were 250 instances in the corpus, but only 229 were prepositions and the remaining 21 were adverbs.

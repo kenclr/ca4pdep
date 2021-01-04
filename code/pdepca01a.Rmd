@@ -384,11 +384,11 @@ fviz_ca_biplot(res.ca, repel = TRUE)
 ```
 
 #### Asymmetric biplot
-Note that, in order to interpret the distance between column points and row points, the simplest way is to make an asymmetric plot. This means that, the column profiles must be presented in row space or vice-versa.
+Note that, in order to interpret the distance between column points and row points, the simplest way is to make an asymmetric plot. This means that, the column profiles must be presented in row space or vice versa.
 
-To make an asymetric biplot, rows (or columns) points are plotted from the standard co-ordinates (S) and the profiles of the columns (or the rows) are plotted from the principal coordinates (P).
+To make an asymmetric biplot, rows (or columns) points are plotted from the standard co-ordinates (S) and the profiles of the columns (or the rows) are plotted from the principal coordinates (P).
 
-For a given axis, the standard and principap co-ordinates are related as follows:
+For a given axis, the standard and principal co-ordinates are related as follows:
 
 <span style="color:red">P = sqrt(eigenvalue) X S</span>
 - <span style="color:red">P</span>: the principal coordinate of a row (or a column) on the axis
