@@ -1,0 +1,45 @@
+---
+title: "Instance Analysis"
+author: "Ken Litkowski"
+date: "12/7/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Multiple Correspondence Analysis (MCA) of Instance Data
+
+To use the techniques of multiple correspondence analysis, the data underlie a contingency table characterize the variables for the instances. The first step of CA is identifies the comma-separated values file and reads that file into a table (**tab**). The first 10 rows for the table is then printed. (See Litkowski[^litk] for current work). 
+
+[^litk]: Litkowski, Ken. (2020, December). Preposition Analysis Using Correspondence Analysis. Working Paper 20-02. Damascus, MD: CL Research. (See http://www.clres.com/online-papers/ca4pdep.pdf, the working paper at https://www.overleaf.com/read/vzrkqvpdhxpc, and the GitHub development at https://github.com/kenclr/ca4pdep)
+
+```{r}
+# Locate the initial table to be analyzed
+setwd("C:/Research/CorrAnal/data/")
+tab <- read.table("abovetable.csv", header=TRUE,sep=",", row.names=1, check.names=TRUE)
+tab[1:10,] # print out the part-of-speech table
+```
+
+The next code invokes the CA package, **FactoMineR**. The main function is executed in **CA(tab)** into the variable **res.mca**, for the first two columns ("S" - sense and "C" - complement part of speech). This execution uses the default options. Three plots are generated: (1) the factor map where the points locate the senses and the parts of speech, (2) the individuals where the points locate each corpus instance, and (3) the variables representation ("S" and "C").
+```{r}
+library("FactoMineR")
+library("factoextra")
+res.mca <- MCA(tab[,1:2])
+```
+
+The results are then summarized. This shows the execution that was called. The next group lists the eigenvalues, showing the variance with each dimension (equal of the sum of the possible values for the two variables, here (10-1) + (11-1) = 19), with the percentage of the variance for each dimension and the cumulative percentage of the variances. The next group lists the first 10 individuals, showing their location (superimposing the many individuals having the same locations). Next, the group lists the first 10 categories, showing their locations in the factor maps, here just listing the 10 senses, not listing the parts of speech. Finally, the effect size ($\eta$<sup>2</sup>) is listed showing between the variables ("S" and "C").
+```{r}
+summary(res.mca)
+```
+
+The next step performs the analysis on the full table, i.e., incorporating the governor parts of speech. The first factor map now adds a subscript (C_ and G_) to the represent the either parts of speech (making it more difficult to perceive differences). The factor map for the individuals shows some separation among the instances, but still contains many instances at the same location. Examining common locations allows a considerable amount of similarity in the instances.
+```{r}
+res.mca <- MCA(tab)
+dim2 <- res.mca$ind$coord[,1:2]
+dim2
+# res.mca = MCA(atab)
+# library(explor)
+# explor(res.mca)
+```
