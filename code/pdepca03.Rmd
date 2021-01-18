@@ -1,0 +1,189 @@
+---
+title: "Dictionary Analysis"
+author: "Ken Litkowski"
+date: "12/25/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Correspondence Analysis (CA) of a Dictionary Contingency Table
+
+This correspondence analysis examines the contingency table of the senses for the parts of speech of the example sentences from the *Oxford Dictionary of English*. (See Litkowski[^litk] for current work). This table can serve as a reference base against which to assess tagging of other instances. In this case, we use the corpora described in the preposition project corpora (see Litkowski[^litk2]). Contingency tables for these other corpora have some differences from the anchor table with respect to the senses and parts of speech, described below. 
+
+[^litk]: Litkowski, Ken. (2020, December). Preposition Analysis Using Correspondence Analysis. Working Paper 20-02. Damascus, MD: CL Research. (See http://www.clres.com/online-papers/ca4pdep.pdf, the working paper at https://www.overleaf.com/read/vzrkqvpdhxpc, and the GitHub development at https://github.com/kenclr/ca4pdep.)
+
+[^litk2]: Litkowski, Ken. (2013, April). The Preposition Project Corpora, Technical Report 13-01. Damascus, MD: CL Research (http://www.clres.com/online-papers/TPPCorpora.pdf).
+
+The first step is to load the package that will be used to perform the correspondence analyses. The next step reads the contingency table generated from the *Oxford English Corpus* for the senses **above** with the parts of speech for the complements of the preposition in the example sentences.
+```{r}
+# Load the packages:
+library("FactoMineR")
+#library("factoextra")
+```
+
+### OEC Contingency Table
+The OEC contingency table is based on the complements for each sense. Since the example sentences in OEC are likely to be simpler and not as complicated in sentences in a representative set of corpus instances. As a result, the parses and features of the OEC sentences are likely to be more accurate and hence constitute a better reference.
+
+```{r}
+# Establishes the local files
+setwd("C:/Research/CorrAnal/data/")
+# The OEC contingency table
+tab <- read.table("feats-oec-above-all.csv", header=TRUE,sep=",", row.names=1, check.names=TRUE)
+tab
+```
+
+### Factor map for OEC dictionary examples
+To compute correspondence analysis, the function **CA** is executed with **tab** as the anchor contingency table. This function defaults providing a graph of the factor map. This will be the map into which we will localize supplementary points; we will find the closest active point for each sense of the other corpora.
+
+```{r}
+#res.ca <- CA(tab, graph = FALSE)
+res.ca <- CA(tab)
+```
+
+### Coordinating with the Anchor Senses
+The process of determining the closest sense involves emplacing a supplementary or passive point into the factor map. To do this, it is necessary that the variables of the contingency tables for other corpora conform to the anchor table. For the rows (senses), there may be additional senses or some senses do not appear in the other corpus. This is not a problem, since we only need to examine the ones that are present. For the columns, it is necessary to deal with any differences between those in the anchor and those in any comparison. This may drop some columns, combine multiple columns, or add columns.
+
+#### CPA Contingency Table
+As suggested above, the CPA instances are likely to include some aspects of the contingency table that do not correspond exactly with the OEC contingency table. In this case, there are several differences for **__above__** that require some modification. In PDEP, another sense ("10(n)") was added, based on a multiple word expression corresponding to instances for *_above all_*. The PDEP instances have complement parts of speech ("jj", "nnps", "pdt", "wp") that may been incorrectly parsed or correspond to less frequently parts of speech (e.g., plural proper noun). To determine how the CPA rows and columns differ from the reference OEC table, we use the set differences of their names *setdiff*, identifying the row difference (*rno*) and the column difference (*cno*). We set these to items to be dropped. We then create a new table (*cpa1*) that drops the items. This is to be used as the CPA contingency table.
+
+```{r}
+# Establishes the local files
+setwd("C:/Research/CorrAnal/data/")
+# The CPA contingency table
+cpa <- read.table("cpa-above-pos.csv", header=TRUE,sep=",", row.names=1, check.names=TRUE)
+cpa
+# Determine how the CPA rows and columns difference from the reference OEC table
+# Row difference
+rno = setdiff(rownames(cpa),rownames(tab))
+print(rno)
+# Column difference
+cno <- setdiff(colnames(cpa),colnames(tab))
+print(cno)
+cdrop <- c(cno)
+rdrop = c(rno)
+# Remove appropriate rows and columns
+cpa1 <- cpa[!(rownames(cpa) %in% rdrop),!(colnames(cpa) %in% cdrop)]
+cpa1
+```
+
+#### FN Contingency Table
+The FN contingency table has three differences from the anchor table. FN has no instances for three rows (senses, *3(1b)*, *5(2a)*, and *6(2b)*); these absences do not pose a problem. FN has two differences in the columns (parts of speech). FN has *nnps* (plural proper nouns), not in the anchor; to deal with this, we add the plural counts to those of the single proper nouns, viewing them as being quite similar. The FN has no *vbg* (gerundial) column in the table; to deal with this, we append a new column labeled as *vbg*, with a 0 in each cell. It would be possible to perform a correspondence analysis on the original FN table, but this would not succeed, since a column having only 0 values would be degenerate. For our purposes, such a column is not problematic.
+```{r}
+# Establishes the local files
+setwd("C:/Research/CorrAnal/data/")
+# The FN contingency table
+fn <- read.table("feats-fn-above-all.csv", header=TRUE,sep=",", row.names=1, check.names=TRUE)
+fn
+fn[,"nnp"] <- fn[,"nnp"] + fn[,"nnps"]
+fn$nnps <- NULL
+# fn
+fn$vbg <- c(0,0,0,0,0,0)
+fn
+```
+
+### Examining a Supplementary Row
+To analyze the supplementary rows, we append rows to the anchor (OEC) contingency table. We then perform the correspondence analysis with the anchor table, as before, but indicating that we have one or more supplementary rows. The figure is the result of adding two supplementary rows from the comparison tables, one with the row *C9(3)* from the CPA table and one with the row *F9(3)* from the FN table. This figure should be compared with the factor map for the OEC dictionary examples above. The two figures are essentially identical, except for the addition of points where the supplementary rows are located. In the summary results for the CA, the only information associated with these rows is their coordinate locations. That is, there is no other information because they are passive points, not the active points that determine the plot.
+```{r}
+X <- cpa1["9(3)",]
+rownames(X) = "C9(3)"
+tab1 <- rbind(tab,X)
+Y <- fn["9(3)",]
+rownames(Y) = "F9(3)"
+tab1 <- rbind(tab1,Y)
+tab1
+res <- CA(tab1, row.sup = c(10,11))
+```
+
+### General Procedure for Examining All Supplementary
+
+From simple inspection, the two supplementary points (*C9(3)* and *F9(3)*) appear to be closest to the anchor point *9(3)*. To confirm this, we compare the distances from the supplementary points to all the other points in the anchor map. This suggests (1) determining the distances for the rows of each comparison table and (2) ranking where each row would occur. Since the anchor table has 9 rows (senses), each comparison row will have a ranking between 1 to 9. For example, *C4(2)* has the rank 2 (i.e., there is one closer point, *2(1a)*) and *F4(2)* has rank 3 (i.e., there are two closer points, *1(1)* and *5(2a)*).
+
+The routine for determining the ranks for all the comparison tables consists of simple steps. For each row (**sense**) in each comparison table (**feat**), we perform a supplementary analysis function (**supanal**). This function gets the row from the comparison table, appends the row to the anchor table, and performs the correspondence analysis (with the row identified as a supplementary point). The result of the CA is then passed to a function (**dist**) that determines the distances of the supplementary coordinate with the coordinates of the anchor table rows. The distances are then sorted to find the rank of the supplementary point.
+
+```{r}
+supanal <- function(sense,feat){
+  # Determine where the sense lies in the sorted distances
+  #   from the anchor table
+  X <- feat[sense,]
+  rownames(X) = "X"
+  rbind(tab,X)
+  res <- CA(rbind(tab,X), row.sup = 10, graph = FALSE)
+  # Distances of X with all rows in tab
+  distances <- dists(res)
+  df <- data.frame(rownames(tab),distances)
+  df <- df[order(df$distances),]
+  # Can examine the distances if desired
+  # print(df)
+  # When the supplementary sense is found, that will
+  #   be the ordinal rank
+  ord <- 1
+  for (i in 1:dim(tab)[1]) {
+    if (!(df[i,1] == sense)){
+      ord <- ord+1
+    } else {
+      break
+    }
+  }
+  # Can print the ranking for the rank for the sense
+  # print(paste(sense, "-", ord))
+  # Returns the rank
+  return(ord)
+}
+
+dists <- function (res){
+  xpt <- c(res$row.sup$coord[1,1], res$row.sup$coord[1,2])
+  ypt <- c(res$row$coord[1,1], res$row$coord[1,2])
+  # create a list of the points for the results
+  # ypt <- c(res$row$coord[1,1], res$row$coord[1,2])
+  r <- rownames(res$call$X)
+  l <- length(rownames(res$call$X))
+  m <- c()
+  for (i in 1:l) {
+    ypt <- c(res$row$coord[i,1], res$row$coord[i,2])
+    d <- sqrt((xpt[1]-ypt[1])^2 + (xpt[2]-ypt[2])^2)
+    m <- c(m,round(d,4))
+  }
+  return(m)
+}
+```
+
+After defined the necessary functions, the comparison tables were processed. The Corpus Pattern Analysis table was modified above because it had an additional sense and several columns not present in the anchor table. The modified table could then be processed through a simple loop. The FrameNet table also was modified above because it had slightly different parts of speech. Then, it also did not have instances for three senses, so in the loop it was necessary to indicate that no rank was relevant (i.e., "NA"). These loops produce the ranks for each sense.
+```{r}
+# Corpus Pattern Analysis Table Assessment
+dc <- c()
+for(i in 1:dim(cpa1)[1]){
+  r <- supanal(rownames(cpa1)[i],cpa1)
+  dc <- c(dc,r)
+}
+
+# FrameNet Table Assessment
+dfn <- c()
+for(i in 1:dim(tab)[1]){
+  s <- rownames(tab)[i]
+  if(s %in% rownames(fn))
+    r <- supanal(s,fn)
+  else
+    r <- NA
+  dfn <- c(dfn,r)
+}
+```
+
+With the results in **dc** and **dfn**, a table of the ranks was constructed for the senses and the two comparison tables. This data frame has three columns: the sense list, the results for the CPA table, and the results for the FN table. In addition, a final row giving the average rank for each comparison table was appended to the result table. While the CPA table had all 9 senses as the anchor table, the FN table only have 6 of the senses, requiring a more complicated routine for computing the average rank.
+```{r}
+df <- data.frame(rownames(tab),dc,dfn)
+colnames(df) <- c("Senses","CPA","FN")
+cave <- round(sum(df[,2])/9,1)
+nasum <- 0
+nacnt <- 0
+for(i in df[,3])
+  if(!is.na(i)) {
+    nasum <- nasum + i
+  } else {
+    nacnt <- nacnt + 1
+  }
+fave <- round(nasum/(9-nacnt),1)
+rbind(df,c("Ave", cave, fave))
+```
