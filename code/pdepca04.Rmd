@@ -1,0 +1,145 @@
+---
+title: "Feature Selection"
+author: "Ken Litkowski"
+date: "1/25/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+PDEP used 7 word-finding (**wfr**) and 17 feature extraction (**fer**) rules to create features to characterize the behaviors of a focus preposition in sentences. The objective here is to identify which of the potential 119 combinations that best fit that distinguish among the senses for a preposition. There are 1171 features for the 81,509 sentences in PDEP, a total of 96 million features. These need to be brought down to a level of describing the behaviors for the 1040 PDEP senses. (See Litkowski[^litk] for current work.)
+
+[^litk]: Litkowski, Ken. (2020, December). Preposition Analysis Using Correspondence Analysis. Working Paper 20-02. Damascus, MD: CL Research. (See http://www.clres.com/online-papers/ca4pdep.pdf, the working paper at https://www.overleaf.com/read/vzrkqvpdhxpc, and the GitHub development at https://github.com/kenclr/ca4pdep.)
+
+As indicated in the working paper, each preposition has its own peculiarity. That is, rather than concluding generalities for the prepositions, we will focus of general approaches for performing the analyses. For this discussion, we will focus on the data for **above**, which parsed 488 sentences (167 for OEC, 250 for CPA, and 71 for FN) that generated 667,834 features; 119,197 of these are distinct with the full **wfr:fer:value** feature specifications.
+
+The previous discussions about **above**, in describing correspondence analysis, used only one feature (**hr:pos:**, heuristics of the parts of speech for preposition complements) of the 119 possibilities. The goal is to find which of the other possible features can be used in instance[^ianal] correspondence analysis.
+
+[^ianal]: Litkowski, Ken (2020, December). Instance Analysis. (See https://www.clres.com/ca/pdepca02.html.)
+
+In developing models for preposition disambiguation, an important component of the support vector models was a chi-square analysis of features. There was a chi-square analysis for **above** for each of the three corpora. 
+
+```{r}
+# Significance at 0.05 level, which uses the number of 
+#   senses to determine degrees of freedom
+pcts <- c()
+for(i in 1:32){
+  x = qchisq(.05, df= i, lower.tail = FALSE)
+  pcts <- c(pcts, round(x,2))
+}
+pcts
+# Initializes the counting matrix
+wfr <- c("h", "hl", "l", "vl", "wl", "c", "hr")
+fer <- c("h", "ah", "af", "c", "g", "l", "w", "wc", "ln", "pos", "ri", "s", "as", "cpa", "fn", "vn", "o")
+m <- matrix(nrow=7, ncol=17, dimnames = list(wfr, fer))
+for(i in 1:dim(m)[1])
+  m[i,] <- 0
+# To get file names:
+dir <- c("C:\\Research\\Preps\\OEC\\Chisq",
+         "C:\\JavaProjects\\FanseParser2\\data\\psd\\CPA\\chisq",
+         "C:\\JavaProjects\\FanseParser2\\data\\psd\\TPP\\chisq")
+corp <- c("OEC", "CPA", "TPP")
+#setwd("C:\\Research\\Preps\\OEC\\Chisq")
+#setwd("C:\\JavaProjects\\FanseParser2\\data\\psd\\CPA\\chisq")
+#setwd("C:\\JavaProjects\\FanseParser2\\data\\psd\\TPP\\chisq")
+#chiFiles <- list.files(path="./", pattern="*.chisq")
+#load_v <- scan(chiFiles[1], what="char", sep="\n")
+# To get the number of senses
+#l <- length(unlist(strsplit(load_v[1], "\t")))
+# The appropriate significance
+#sig <- pcts[l-1]
+for(d in 1:3){
+  setwd(dir[d])
+  chiFiles <- list.files(path="./", pattern="*.chisq")
+  for(i in 1:length(chiFiles)){
+    if(chiFiles[i] != "above.chisq")
+      next
+    for(k in 1:dim(m)[1])
+      m[k,] <- 0
+    load_v <- scan(chiFiles[i], what="char", sep="\n")
+    feats <- length(load_v)
+    l <- length(unlist(strsplit(load_v[1], "\t")))
+    sig <- pcts[l-1]
+    signif <- 0
+    for(j in 3:length(load_v)){
+      feat <- unlist(strsplit(load_v[j], "\t"))
+      if(as.numeric(feat[2]) < sig)
+        break
+      else
+        signif <- signif + 1
+      wf <- unlist(strsplit(feat[1], ":"))
+      m[wf[1],wf[2]] <- m[wf[1],wf[2]] + 1
+    }
+    print((paste(corp[d], "'above' with", signif, "significant features")))
+    print(m)
+}
+}
+
+senses <- c("2(1a)", "3(1b)", "9(3)", "1(1)", "4(2)", "6(2b)", "8(2d)", "7(2c)", "5(2a)")
+senses
+cnts <- c(20, 20, 21, 20, 20, 11, 20, 20, 21)
+pcts <- cnts/sum(cnts) # the proportion for each sense
+pcts
+obs <- c(0, 0, 0, 0, 0, 0, 19, 0, 0)
+#obs
+pcts * sum(obs)
+exps <- pcts * sum(obs)
+#exps
+obs - exps # observed - expectation
+(obs - exps)^2/exps # inertia for each cell
+sum((obs - exps)^2/exps)
+```
+
+```{r}
+# New analysis
+pcts <- c()
+for(i in 1:32){
+  x = qchisq(.05, df= i, lower.tail = FALSE)
+  pcts <- c(pcts, round(x,2))
+}
+pcts
+setwd("C:\\Research\\Preps\\OEC\\Chisq")
+chiFiles <- list.files(path="./", pattern="*.chisq")
+for(i in 1:length(chiFiles)){
+  if(chiFiles[i] != "above.chisq")
+    next
+  load_v <- scan(chiFiles[i], what="char", sep="\n")
+  #load_v <- scan(chiFiles[4], what="char", sep="\n")
+  #load_v[1] # the senses
+  #load_v[3] # the first significant feature
+  feats <- length(load_v)
+  l <- length(unlist(strsplit(load_v[1], "\t")))
+  #senses <- unlist(strsplit(load_v[1], "\t")) # gets them
+  #featline <- unlist(strsplit(load_v[3], "\t")) # the first feat
+  #feature <- featline[1] # the feature name
+  #chisq <- featline[2] # the chi-square
+  #fcnts <- featline[3:length(featline)] # the counts each sense
+  #insts <- unlist(strsplit(load_v[2], "\t"))
+  #insts <- as.numeric(insts)
+  #tot <- sum(insts)
+  #pcts <- insts/tot
+  #obs <- as.numeric(fcnts)
+  #ftot <- sum(obs)
+  #exp <- pcts * ftot
+  #diffs <- obs - exp
+  # diffs * diffs / exp
+  #sum(diffs * diffs / exp)
+  sig <- pcts[l-1]
+  signif <- 0
+  for(j in 3:length(load_v)){
+    feat <- unlist(strsplit(load_v[j], "\t"))
+    if(as.numeric(feat[2]) < sig)
+      break
+    else
+      signif <- signif + 1
+  }
+  head <- paste(chiFiles[i],":",format(l),"senses,")
+  head <- paste(head,format(feats),"lines,")
+  head <- paste(head,format(signif),"significant")
+  print(head)
+}
+```
