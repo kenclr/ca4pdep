@@ -9,11 +9,13 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+## Delving Into the Feature Sea
 
 PDEP used 7 word-finding (**wfr**) and 17 feature extraction (**fer**) rules to create features to characterize the behaviors of a focus preposition in sentences. The objective here is to identify which of the potential 119 combinations that best fit that distinguish among the senses for a preposition. There are 1171 features for the 81,509 sentences in PDEP, a total of 96 million features. These need to be brought down to a level of describing the behaviors for the 1040 PDEP senses. (See Litkowski[^litk] for current work.)
 
 [^litk]: Litkowski, Ken. (2020, December). Preposition Analysis Using Correspondence Analysis. Working Paper 20-02. Damascus, MD: CL Research. (See http://www.clres.com/online-papers/ca4pdep.pdf, the working paper at https://www.overleaf.com/read/vzrkqvpdhxpc, and the GitHub development at https://github.com/kenclr/ca4pdep.)
+
+### Using an Example Preposition (_above_)
 
 As indicated in the working paper, each preposition has its own peculiarity. That is, rather than concluding generalities for the prepositions, we will focus of general approaches for performing the analyses. For this discussion, we will focus on the data for **above**, which parsed 488 sentences (167 for OEC, 250 for CPA, and 71 for FN) that generated 667,834 features; 119,197 of these are distinct with the full **wfr:fer:value** feature specifications.
 
@@ -21,7 +23,13 @@ The previous discussions about **above**, in describing correspondence analysis,
 
 [^ianal]: Litkowski, Ken (2020, December). Instance Analysis. (See https://www.clres.com/ca/pdepca02.html.)
 
-In developing models for preposition disambiguation, an important component of the support vector models was a chi-square analysis of features. There was a chi-square analysis for **above** for each of the three corpora. 
+### Using Chi-Square Analyses of Features
+
+In developing models for preposition disambiguation, an important component of the support vector models was a chi-square analysis of features. There are 276 chi-square files (101 in OEC, 129 in CPA, and 46 in TPP). A chi-square analysis requires at least two (2) senses for a preposition. A chi-square file begins with two lines, the first listing the senses and the second identifying the number of instances for each sense. In the chi-square analysis, the basis for computing the expected values is the proportion for each of the senses. The feature selection for a chi-square analysis uses a minimum frequency of 5 occurrences for a feature. The feature selection routine begins by tabulating the number of occurrences of each feature in the instances for the preposition; the tabulation constitutes the __observed__ values for the feature. The __expected__ values are multiplies the expected distribution for the number of occurrences for the feature. The chi-square is $$\chi^2 = \sum \frac {(O - E)^2}{E}$$ After the first two lines in the chi-square file, the remaining lines consist of a line that lists the tab-separated items: the feature name (**wfr:fer:value**), the $\chi^2$, and the number of occurrences for each of the senses. These lines are sorted in decreasing $\chi^2$.
+
+### Identifying Significant Features
+
+The chi-square files contain a line for all features that have at least 5 occurrences. However, not all features are considered to be significant. For this examination, we used significance at the 0.05 level, which requires identifying the degrees of freedom, which is based one less than the number of senses. Many features have a distribution that have a frequency quite close to the distribution of the senses, i.e., they are not significant. In the analysis below, we use the following to determine whether a feature is to be considered significant.
 
 ```{r}
 # Significance at 0.05 level, which uses the number of 
@@ -32,26 +40,43 @@ for(i in 1:32){
   pcts <- c(pcts, round(x,2))
 }
 pcts
+```
+
+### Chi-Square Files for _above_
+
+There was a chi-square analysis for **above** for each of the three corpora. Our analysis will examine the chi-square values for a file for each corpus. These files are available in the GitHub[^github] data folder. Note that the number of senses is different for the three corpus (9 for OEC, 10 for CPA, and 6 for TPP), so that a different __pcts__ value will be appropriate for the three corpora.
+
+[^github]:https://github.com/kenclr/ca4pdep.
+
+```{r}
+# To get file names:
+dir <- c("C:\\Research\\Preps\\OEC\\Chisq",
+         "C:\\JavaProjects\\FanseParser2\\data\\psd\\CPA\\chisq",
+         "C:\\JavaProjects\\FanseParser2\\data\\psd\\TPP\\chisq")
+corp <- c("OEC", "CPA", "TPP")
+```
+
+### Counting Feature Occurrences: The Counting Matrix
+
+In our analysis, we are going to count the number of features that are considered significant. This will be done in a counting matrix of 7 x 17. The rows are the word-finding rules (**wfr**); the columns are the feature-extraction rules(**fer**). The legend[^leg] for the matrix provides the description of each row and column.
+
+[^leg]:**__Word-finding rules__** - __h__ (governor), __hl__ (verb or head to the left), __l__ (head to the left), __vl__ (verb to the left), __wl__ (word to the left), __c__ (syntactic preposition complement). __hr__ (heuristic preposition complement); **__Feature-extraction rules__** - __h__ (WordNet immediate hypernym), __ah__ (all WordNet hypernym), __af__ (affixes), __c__ (whether the word is capitalized), __g__ (all WordNet gloss words), __l__ (lemma), __w__ (word), __wc__ (word class), __ln__ (WordNet lexical name), __pos__ (part of speech), __ri__ (rule itself), __s__ (WordNet immediate synonyms), __as__ (all WordNet synonyms), __cpa__ (verb from the pattern dictionary of English verbs), __fn__ (FrameNet entry), __vn__ (VerbNet entry), __o__ (Oxford noun hierarchy immediate hypernym)
+
+```{r}
 # Initializes the counting matrix
 wfr <- c("h", "hl", "l", "vl", "wl", "c", "hr")
 fer <- c("h", "ah", "af", "c", "g", "l", "w", "wc", "ln", "pos", "ri", "s", "as", "cpa", "fn", "vn", "o")
 m <- matrix(nrow=7, ncol=17, dimnames = list(wfr, fer))
 for(i in 1:dim(m)[1])
   m[i,] <- 0
-# To get file names:
-dir <- c("C:\\Research\\Preps\\OEC\\Chisq",
-         "C:\\JavaProjects\\FanseParser2\\data\\psd\\CPA\\chisq",
-         "C:\\JavaProjects\\FanseParser2\\data\\psd\\TPP\\chisq")
-corp <- c("OEC", "CPA", "TPP")
-#setwd("C:\\Research\\Preps\\OEC\\Chisq")
-#setwd("C:\\JavaProjects\\FanseParser2\\data\\psd\\CPA\\chisq")
-#setwd("C:\\JavaProjects\\FanseParser2\\data\\psd\\TPP\\chisq")
-#chiFiles <- list.files(path="./", pattern="*.chisq")
-#load_v <- scan(chiFiles[1], what="char", sep="\n")
-# To get the number of senses
-#l <- length(unlist(strsplit(load_v[1], "\t")))
-# The appropriate significance
-#sig <- pcts[l-1]
+m
+```
+
+### The Cross-Tabulation of the Significant Features for Each Corpus
+
+The script below is what is used on our computer, but not followed actually in creating the markdown. The script loops over the directories for the three corpora (**dir**). The next step gets the list of chi-square files (**chiFiles**) and loops over the files. In this script, the loop only processes **above.chisq**. The first step reinitializes the counting matrix, setting 0 to each cell. Next, we load the file for the particular preposition (**load_v**) and gets its length (i.e., the number of features). The script then sets **l** to the first line in the file, showing the number of senses, based on the length of the line. We set **sig** to the significance level appropriate for the preposition, based on the degrees of freedom (**pcts[l-1]**). Next, we set **signif** to count the number of significant features, To do this, we loop over the length of the file, examining each line. We set the line to **feat** and look at its second element (**feat[2]**), which is the chi-square value. We break the loop if the value is less than **sig**, indicating that we have ended the feature counting. If still significant, we split the feature name to get the word-finding rule name (**wf[1]**) and the feature-extraction rule name (**wf[2]**), using these as the cell to increment in the counting matrix (**m**).
+
+```{r}
 for(d in 1:3){
   setwd(dir[d])
   chiFiles <- list.files(path="./", pattern="*.chisq")
@@ -78,68 +103,19 @@ for(d in 1:3){
     print(m)
 }
 }
-
-senses <- c("2(1a)", "3(1b)", "9(3)", "1(1)", "4(2)", "6(2b)", "8(2d)", "7(2c)", "5(2a)")
-senses
-cnts <- c(20, 20, 21, 20, 20, 11, 20, 20, 21)
-pcts <- cnts/sum(cnts) # the proportion for each sense
-pcts
-obs <- c(0, 0, 0, 0, 0, 0, 19, 0, 0)
-#obs
-pcts * sum(obs)
-exps <- pcts * sum(obs)
-#exps
-obs - exps # observed - expectation
-(obs - exps)^2/exps # inertia for each cell
-sum((obs - exps)^2/exps)
 ```
 
-```{r}
-# New analysis
-pcts <- c()
-for(i in 1:32){
-  x = qchisq(.05, df= i, lower.tail = FALSE)
-  pcts <- c(pcts, round(x,2))
-}
-pcts
-setwd("C:\\Research\\Preps\\OEC\\Chisq")
-chiFiles <- list.files(path="./", pattern="*.chisq")
-for(i in 1:length(chiFiles)){
-  if(chiFiles[i] != "above.chisq")
-    next
-  load_v <- scan(chiFiles[i], what="char", sep="\n")
-  #load_v <- scan(chiFiles[4], what="char", sep="\n")
-  #load_v[1] # the senses
-  #load_v[3] # the first significant feature
-  feats <- length(load_v)
-  l <- length(unlist(strsplit(load_v[1], "\t")))
-  #senses <- unlist(strsplit(load_v[1], "\t")) # gets them
-  #featline <- unlist(strsplit(load_v[3], "\t")) # the first feat
-  #feature <- featline[1] # the feature name
-  #chisq <- featline[2] # the chi-square
-  #fcnts <- featline[3:length(featline)] # the counts each sense
-  #insts <- unlist(strsplit(load_v[2], "\t"))
-  #insts <- as.numeric(insts)
-  #tot <- sum(insts)
-  #pcts <- insts/tot
-  #obs <- as.numeric(fcnts)
-  #ftot <- sum(obs)
-  #exp <- pcts * ftot
-  #diffs <- obs - exp
-  # diffs * diffs / exp
-  #sum(diffs * diffs / exp)
-  sig <- pcts[l-1]
-  signif <- 0
-  for(j in 3:length(load_v)){
-    feat <- unlist(strsplit(load_v[j], "\t"))
-    if(as.numeric(feat[2]) < sig)
-      break
-    else
-      signif <- signif + 1
-  }
-  head <- paste(chiFiles[i],":",format(l),"senses,")
-  head <- paste(head,format(feats),"lines,")
-  head <- paste(head,format(signif),"significant")
-  print(head)
-}
-```
+## Analyzing the Feature Tabulations
+
+### Initial Observations
+
+The first observation for the feature tabulations is that there are different results from the three corpora. The main conclusion is that there is no main conclusion that will encompass the three corpora. Instead, it will be necessary to examine multiple chi-square files in themselves.
+
+#### OEC Tabulations
+The OEC tabulation has the largest number of significant features. As discussed in the dictionary analysis (https://www.clres.com/ca/pdepca03.html), the instances for the several senses for the corpus were probably selected to represent the differences. The tabulation for this corpus seems to support the differences, resulting in different distributions of the important features.
+
+#### CPA Tabulations
+
+#### TPP Tabulations
+
+### Technique for Examining the Feature Cells
