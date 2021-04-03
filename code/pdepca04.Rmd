@@ -13,27 +13,29 @@ knitr::opts_chunk$set(echo = TRUE)
 
 PDEP used 7 word-finding (**wfr**) and 17 feature extraction (**fer**) rules to create features to characterize the behaviors of a focus preposition in sentences. The objective here is to identify which of the potential 119 combinations that best fit that distinguish among the senses for a preposition. There are 1171 features for the 81,509 sentences in PDEP, a total of 96 million features. These need to be brought down to a level of describing the behaviors for the 1040 PDEP senses. (See Litkowski[^litk] for current work.) 
 
-We will use an [example preposition](#example), particularly Using [chi-square analyses](#chisq). We will identifying [significant features](#sigfeats) from chi-square [files for _above_](#abovefiles). We will use a counting [matrix](#matrix) for the significant features for the preposition, creating a [Cross-Tabulation](#tabs) of the Significant Features for Each Corpus. 
+We will use an [example preposition](#example), particularly Using [chi-square analyses](#chisq). We will identifying [significant features](#sigfeats) from chi-square [files for _above_](#abovefiles). We will use a counting [matrix](#matrix) for the significant features for the preposition, creating a [cross-tabulation](#tabs) of the significant features for each corpus from the 119 feature combinations. 
 
-With these tabulations, we [analyze the feature](#analtabs).
+With these tabulations, we can begin to [analyze the features](#analtabs). First, we provide some [initial observations](#init), indicating some differences for the three corpora. We then develop more details for the [techniques for examining the feature cells](#techniq). We describe some general [elements of feature cross-tabulations](#main). Next, we provide techniques for the detailed examination of [specific features](#specific). We first indicate the need to identify the [corpus to be used](#step01). In this, it is necessary to Specify [the preposition, the feature, and the minimum frequency for the feature](#step02). With this, we can compute the contributions to the [chi-square](#step03), i.e., which senses are most significant. We indicate that, with over 30,000 possible combinations, selecting [what to examine](#step04) is a difficult issue. Using our examination of the parts of speech for **above** complements, we show examples of how to [interpret feature results](#step05).
+
+The discussions below do not provide a certain method for feature selection. Rather, the discussions provide techniques that can be used to characterize preposition behavior. These techniques can be viewed as additions to preposition linguistic lexicography.
 
 [^litk]: Litkowski, Ken. (2020, December). Preposition Analysis Using Correspondence Analysis. Working Paper 20-02. Damascus, MD: CL Research. (See http://www.clres.com/online-papers/ca4pdep.pdf, the working paper at https://www.overleaf.com/read/vzrkqvpdhxpc, and the GitHub development at https://github.com/kenclr/ca4pdep.)
 
 ### Using an Example Preposition (_above_) {#example}
 
-As indicated in the working paper, each preposition has its own peculiarity. That is, rather than concluding generalities for the prepositions, we will focus of general approaches for performing the analyses. For this discussion, we will focus on the data for **above**, which parsed 488 sentences (167 for OEC, 250 for CPA, and 71 for FN) that generated 667,834 features; 119,197 of these are distinct with the full **wfr:fer:value** feature specifications.
+As indicated in the working paper, each preposition has its own peculiarity. That is, rather than concluding generalities for the prepositions, we will focus on general approaches for performing the analyses. For this discussion, we will focus on the data for **above**, which parsed 488 sentences (167 for OEC, 250 for CPA, and 71 for FN) that generated 667,834 features; there are 119,197 distinct **wfr:fer:value** feature specifications.
 
-The previous discussions about **above**, in describing correspondence analysis, used only one feature (**hr:pos:**, heuristics of the parts of speech for preposition complements) of the 119 possibilities. The goal is to find which of the other possible features can be used in instance[^ianal] correspondence analysis.
+The previous discussions about **above**, in describing correspondence analysis, used only one feature (**hr:pos:**), heuristics of the parts of speech for preposition complements of the 119 possibilities. The goal is to find which of the other possible features can be used in instance[^ianal] correspondence analysis.
 
 [^ianal]: Litkowski, Ken (2020, December). Instance Analysis. (See https://www.clres.com/ca/pdepca02.html.)
 
 ### Using Chi-Square Analyses of Features {#chisq}
 
-In developing models for preposition disambiguation, an important component of the support vector models was a chi-square analysis of features. There are 276 chi-square files (101 in OEC, 129 in CPA, and 46 in TPP). A chi-square analysis requires at least two (2) senses for a preposition. A chi-square file begins with two lines, the first listing the senses and the second identifying the number of instances for each sense. In the chi-square analysis, the basis for computing the expected values is the proportion for each of the senses. The feature selection for a chi-square analysis uses a minimum frequency of 5 occurrences for a feature. The feature selection routine begins by tabulating the number of occurrences of each feature in the instances for the preposition; the tabulation constitutes the __observed__ values for the feature. The __expected__ values are multiplies the expected distribution for the number of occurrences for the feature. The chi-square is $$\chi^2 = \sum \frac {(O - E)^2}{E}$$ After the first two lines in the chi-square file, the remaining lines consist of a line that lists the tab-separated items: the feature name (**wfr:fer:value**), the $\chi^2$, and the number of occurrences for each of the senses. These lines are sorted in decreasing $\chi^2$.
+In developing models for preposition disambiguation, an important component of the support vector models was a chi-square analysis of features. There are 267 chi-square files (97 in OEC, 125 in CPA, and 45 in TPP). A chi-square analysis requires at least two (2) senses for a preposition. A chi-square file begins with two lines, the first listing the senses and the second identifying the number of instances for each sense in the specific corpus. In the chi-square analysis, the basis for computing the expected values is the proportion for each of the senses. The initial feature selection for a chi-square analysis uses a minimum frequency of 5 occurrences for a feature. The feature selection routine begins by tabulating the number of occurrences of each feature in the instances for the preposition; the tabulation constitutes the __observed__ values for the feature. The __expected__ values are multiplies the expected distribution for the number of occurrences for the feature. The chi-square is $$\chi^2 = \sum \frac {(O - E)^2}{E}$$ After the first two lines in the chi-square file, the remaining lines consist of a line that lists the tab-separated items: the feature name (**wfr:fer:value**), the $\chi^2$ for the feature, and the number of occurrences for each of the senses. These lines are sorted in decreasing $\chi^2$.
 
 ### Identifying Significant Features {#sigfeats}
 
-The chi-square files contain a line for all features that have at least 5 occurrences. However, not all features are considered to be significant. For this examination, we used significance at the 0.05 level, which requires identifying the degrees of freedom, which is based one less than the number of senses. Many features have a distribution that have a frequency quite close to the distribution of the senses, i.e., they are not significant. In the analysis below, we use the following to determine whether a feature is to be considered significant.
+The chi-square files contain a line for all features that have at least 5 occurrences. However, not all features are considered to be significant. For this examination, we used significance at the 0.05 level, which requires identifying the degrees of freedom, which is one fewer than the number of senses. Many features have a distribution that have a frequency quite close to the distribution of the senses, i.e., they are not significant. In the analysis below, we use the following **p-values** to determine whether a feature is to be considered significant.
 
 ```{r}
 # Significance at 0.05 level, which uses the number of 
@@ -48,7 +50,7 @@ pcts
 
 ### Chi-Square Files for _above_ {#abovefiles}
 
-There was a chi-square analysis for **above** for each of the three corpora. Our analysis will examine the chi-square values for a file for each corpus. These files are available in the GitHub[^github] data folder. Note that the number of senses is different for the three corpus (9 for OEC, 10 for CPA, and 6 for TPP), so that a different __pcts__ value will be appropriate for the three corpora.
+There are a chi-square analyses for **above** for each of the three corpora. Our analysis will examine the chi-square values for a file for each corpus. These files are available in the GitHub[^github] data folder. Note that the number of senses is different for the three corpus (9 for OEC, 10 for CPA, and 6 for TPP), so that a different __pcts__ value will be appropriate for the three corpora.
 
 [^github]:https://github.com/kenclr/ca4pdep.
 
@@ -78,7 +80,7 @@ m
 
 ### The Cross-Tabulation of the Significant Features for Each Corpus {#tabs}
 
-The script below is what is used on our computer, but not followed actually in creating the markdown. The script loops over the directories for the three corpora (**dir**). The next step gets the list of chi-square files (**chiFiles**) and loops over the files. In this script, the loop only processes **above.chisq**. The first step reinitializes the counting [matrix](#matrix), setting 0 to each cell. Next, we load the file for the particular preposition (**load_v**) and gets its length (i.e., the number of features). The script then sets **l** to the first line in the file, showing the number of senses, based on the length of the line. We set **sig** to the significance level appropriate for the preposition, based on the degrees of freedom (**pcts[l-1]**). Next, we set **signif** to count the number of significant features, To do this, we loop over the length of the file, examining each line. We set the line to **feat** and look at its second element (**feat[2]**), which is the chi-square value. We break the loop if the value is less than **sig**, indicating that we have ended the feature counting. If still significant, we split the feature name to get the word-finding rule name (**wf[1]**) and the feature-extraction rule name (**wf[2]**), using these as the cell to increment in the counting matrix (**m**).
+The script below was followed to create the cross-tabulations. The script loops over the directories for the three corpora (**dir**). The next step gets the list of chi-square files (**chiFiles**) and loops over the files. In this script, the loop only processes **above.chisq**; in our computer, we run this script for all 267 chi-squares for the three corpora. The first step reinitializes the counting [matrix](#matrix), setting 0 to each cell. Next, we load the file for the particular preposition (**load_v**) and gets its length (i.e., the number of features). The script then sets **l** to the first line in the file, showing the number of senses, based on the length of the line. We set **sig** to the significance level (**p-value**) appropriate for the preposition, based on the degrees of freedom (**pcts[l-1]**). Next, we set **signif** to count the number of significant features. To do this, we loop over the length of the file, examining each line. We set the line to **feat** and look at its second element (**feat[2]**), which is the chi-square value. We break the loop if the value is less than **sig**, indicating that we have ended the feature counting. If the feature is significant, we split the feature name to get the word-finding rule name (**wf[1]**) and the feature-extraction rule name (**wf[2]**) to increment the cell in the counting matrix (**m**).
 
 ```{r}
 for(d in 1:3){
@@ -111,15 +113,172 @@ for(d in 1:3){
 
 ## Analyzing the Feature Tabulations {#analtabs}
 
-### Initial Observations
+### Initial Observations {#init}
 
-The first observation for the feature tabulations is that there are different results from the three corpora. The main conclusion is that there is no main conclusion that will encompass the three corpora. Instead, it will be necessary to examine multiple chi-square files in themselves. These tabulations are provided for all the chi-square files for all the corpora (97 for OEC, 125 for CPA, and 45 for TPP).
+In looking at the tabulations, we remind that a cell does not correspond to the feature occurrences in the feature files for each corpus. Instead, the cells correspond to the number of occurrences that have the greatest differences from the expected proportions for a feature combination. For example, there may be several parts of speech for preposition's complement and governor, but only a few of them are distinctive (i.e., significant), and possibly useful in the correspondence analyses. For the 173 OEC instances, there are 167 occurrences of **hr:pos:**; there are 7 different feature values, of which only 2 significant ("nnp" and "prp").
+
+The first observation for the feature tabulations is that there are different results from the three corpora. The main conclusion is that there is no main conclusion that will encompass the three corpora. Instead, it will be necessary to examine multiple chi-square files in themselves. These tabulations are provided for all the chi-square files for all the corpora (97 for OEC, 125 for CPA, and 45 for TPP). They are available at https://github.com/kenclr/ca4pdep/tree/main/data in the files **feats\*.txt**. In these files, each preposition tabulation is a space-separated lists.
 
 #### OEC Tabulations
-The OEC tabulation has the largest number of significant features. As discussed in the dictionary analysis (https://www.clres.com/ca/pdepca03.html), the instances for the several senses for the corpus were probably selected to represent the differences. The tabulation for this corpus seems to support the differences, resulting in different distributions of the important features.
+The OEC tabulation has the largest number of significant features. As discussed in the dictionary analysis (https://www.clres.com/ca/pdepca03.html), the instances for the several senses for the corpus were probably selected to represent the differences. The tabulation for this corpus seems to support the differences, resulting in different distributions of the important features. The further analysis will focus on attempting to identify which features distinguish a preposition's senses.
 
 #### CPA Tabulations
+Since the CPA instances are intended to be representative of a preposition's behavior, it is expected that there will be fewer differences from the proportions for each sense. This is likely to reflect in the smaller number of significant features. Another difference for this corpus may be the number of senses. For example, for **above**, there is an added sense ("_above_" corresponding to _above all_); we can expect that more detailed analysis will be observed in some specific feature combinations.
 
 #### TPP Tabulations
+As indicated above, the TPP data correspond to fewer senses (6 compared with 9 for OEC and 10 for CPA). In addition, some of the prepositions have a much larger number of instances (e.g., 4496 for **of** and 2089 for **in**); as a result, the numbers of significant features are much larger for such prepositions (72997 for **of**, 32420 for **in**).
 
-### Technique for Examining the Feature Cells
+### Technique for Examining the Feature Cells {#techniq}
+To get a perspective of what features are significant for one or more preposition, we take a look at the [full set](#main) of cross-tabulations and then examine the features that are [significant](#specific).
+
+#### Main Elements of Feature Cross-Tabulations {#main}
+An initial perspective of the feature cross-tabulations can be obtained by examining a text that includes all of the tables and examining a spreadsheet that also includes all of the tables.
+
+We can search the **feats\*.txt** files for the regular expression **[0-9]+ significant**, obtain the matches, and sort the 267 results. We can first see that the number of significant features ranges from 0 to 72997 (for **of** in the TPP corpus). There are 17 tabulations with no significant features and 61 tabulations that have fewer than 100 significant features. There are 20 files that have more than 10,000 significant features; it may be difficult to get information from such plethora. In general, it may be difficult to find important information from these tables.
+
+From the spreadsheets, it is possible to assess the feature-extraction features. We use three sheets, one for each corpus. We then sum the cells for each of the 17 columns for all the prepositions. The WordNet gloss word (**g**) was the most frequent feature-extraction rule, followed by WordNet immediate hypernym (**h**), all hypernym (**ah**), immediate synonym (**s**), and all synonym (**as**). The numbers of significant features seem to be so large as to be likely difficult to discern meaningful distinctions.
+
+Feature-extraction rules with an intermediate frequency seem likely to be worth more detailed examination. The word class (**wc**) is relatively infrequent, in part because there are only 4 possible values ("noun", "verb", "adjective", or "adverb"); these attain significant only when the word class is significantly different from the usual for a sense. The part of speech (**pos**) appears to be significant to a level that is worth examining. The word (**w**) and lemma (**l**) features appear to be significant for some prepositions and thus worth examining in detail. The WordNet lexical name (**ln**) reach significance in the greatest frequency in this group; since there are only 40 possible values for this feature, attaining significance is worth examining in detail. The feature-extraction rule on whether the word is capitalized (**c**) reaches significant in a relatively number of cases, but such cases may be useful for characterizing a sense's behavior. The number of cases for affixes (**af**) is relatively small; their importance has not yet been examined.
+
+To examine word-finding rules, we search the **feats\*.txt** files for lines beginning with a particular rule (i.e., regular expressions, e.g., **^hr:** for the heuristic complements or **^h:** for the governor). We can copy such lines and then paste the lines into a spreadsheet sheet. We can head the sheet with the column names (i.e., the feature-extraction rule codes) and copy the prepositions and number of senses into the first two columns. With this result, we can compare and contrast the behaviors with the prepositions. This will help us to identify which features to examine in more detail.
+
+These general observations may suggest particular examinations, using the methods described [below](#specific). In addition to examining feature-extraction and word-finding rules, these tables can suggest comparisons with the properties of several prepositions together.
+
+#### Detailed Examination of Specific Features {#specific}
+##### Step 01: Corpus Identification {#step01}
+To analyze specific features, we need to identify which corpus is to be examined. The following function is designed to obtain the chi-square files that will processed. This function should be set as **chiFiles <- corp("oec")** called before the [examination](#step02) in the function **fanal** for the feature analysis.
+```{r}
+#' Set the directory location for the active corpus
+#' 
+#' @param loc - the active corpus ("oec", "cpa", or "tpp")
+#' @return the files ending with ".chisq" in the directory
+corp <- function(loc){
+  if(loc == "oec")
+    setwd("C:\\Research\\Preps\\OEC\\Chisq")
+  else if(loc == "cpa")
+    setwd("C:\\JavaProjects\\FanseParser2\\data\\psd\\CPA\\chisq")
+  else if(loc == "tpp")
+    setwd("C:\\JavaProjects\\FanseParser2\\data\\psd\\TPP\\chisq")
+  chiFiles <- list.files(path="./", pattern="*.chisq")
+  return (chiFiles)
+}
+```
+
+##### Step 02: Specify Preposition, Feature, and Frequency {#step02}
+The main function for the detailed examination is **fanal**. This looks in the specified [directory](#step01) for a file **prep.chisq**. This function processes only the file with the **prep**; this can be modified to process all files in a particular directory. The first two lines of the file identify the **senses** and the number of instances (**insts**) in the corpus; the sum of this number is printed. Based on the number of senses, the [significance level](#sigfeats) (**sig**) is identified based on the degrees of freedom. The function counts the number of significant features (**signif**), a list of the lines in chi-square file (at **hits**), and the number of features (**min**) that meet the minimum frequency.
+
+The function next loops through the lines of the chi-square file, setting each line to **feat**. The loop breaks when the chi-square for a feature is less than **sig**. Otherwise, **signif** is incremented. Next, the feature is examined (using **feat[1]**) to make sure that the name of the feature matches what is required (beginning with **wfr:fer**). If so, the line number is added to **hits**. The feature is tested to see if there are at least the minimum frequency for the occurrences of the feature. This is tested if it does and then also analyzes the [contribution](#step03) of each sense to the total chi-square.
+
+Finally, the results of the function are summarized, listing (1) the number of significant features, (2) the line numbers of the features that have been analyzed, and (3) the number of features with the required frequency.
+
+```{r}
+#' Analyze a feature in the chi-square file for a preposition
+#'
+#' @param prep - the preposition
+#' @param wfr - a word-finding rule
+#' @param fer - a feature-extraction rule
+#' @param minfreq - the minimum occurrences for the feature
+#' @return sum(insts) - prints the number of instances for the feature
+#' @return signif - prints the number of significant feature
+#' @return hits - prints the line numbers matching the tested feature
+#' @return min - prints the number of features with the required frequency
+#' @examples
+#' fanal("above","hr","pos",4)
+
+fanal <- function(prep,wfr,fer,minfreq){
+  fname <- paste(prep, ".chisq", sep = "")
+  featname <- paste(wfr, ":", fer, ":", sep = "")
+  for(i in 1:length(chiFiles)){
+    if(chiFiles[i] != fname)
+      next
+    load_v <- scan(chiFiles[i], what="char", sep="\n")
+    fnum <- length(load_v) - 2 # number of features in the file
+    senses <- unlist(strsplit(load_v[1], "\t"))
+    insts <- unlist(strsplit(load_v[2], "\t"))
+    insts <- as.numeric(insts)
+    print(paste("Number of instances: ", sum(insts)))
+    sig <- pcts[length(senses)-1]
+    signif <- 0
+    hits <- c()
+    min <- 0
+    minfreq <- as.numeric(minfreq)
+    for(j in 3:length(load_v)){
+      feat <- unlist(strsplit(load_v[j], "\t"))
+      if(as.numeric(feat[2]) < sig)
+        break
+      else
+        signif <- signif + 1
+      if(startsWith(feat[1],featname)){ 
+        hits <- c(hits,j)
+        if(contrib(feat,insts,senses,minfreq))
+          min <- min + 1
+      }
+    }
+    print(signif)
+    print(hits)
+    print(min)
+  }
+}
+```
+
+##### Step 03: Contributions to Chi-Square {#step03}
+Each feature has a chi-square computed on the difference between the observed and expected values based on the frequency for the occurrences for the feature. The objective here is to determine how much can be allocated to each sense. This function (**contrib**) repeats the chi-square for a feature and then apportions the total for each of senses. The feature (**feat**) is split into the tab-separated components in **featline**: the feature itself (**feature** in **featline[1]**), the chi-square for the feature (**chisq** in **featline[2]**), and the feature counts for each sense (**fcnts** in the remainder of **featline**). The **observed** for the feature is established into **obs**; if this is less than or equal to **min**, we return with a FALSE return. Otherwise, we are ready to determine how much of the chi-square should be allocated to each sense.
+
+We print the beginning for the output, indicating the feature name and its chi-square value and the number of occurrences for the feature. We sum the number of instances for the full corpus (**insts**) as the total (**tot**). We compute the proportion of each sense in the full corpus (**insts/tot**) as percents (**percts**). Next, we sum the counts for the feature (at **ftot** equal to **sum(fcnts)**) and compute the expected value (**exp**) as **percts\*ftot**. We use the chi-square [equation](#chisq), as above, computing the difference (**diffs**) between the observed (**obs**) and the expected (**exp**). We set the vector **chi** equal to **diffs\*diffs\/exp**.
+
+We print a table showing the situation for each feature that meets the criteria. The table consists of (1) the senses (**sense**), (2) the instances for each sense (**insts**), (3) the feature counts (**fcnts**), and (4) the chi-square contributions to each sense (**chi**). We use this table to describe the results of the analysis.
+```{r}
+#' Determine the contribution to the total chi-square value
+#'  for each sense
+#'
+#' @param feat - a line from the chi-square file
+#' @param insts - the instances for each sense in the corpus
+#' @param senses - the senses for a preposition
+#' @param min - the minimum occurrences for the feature
+#' @return FALSE - when the feature counts in <= min
+#' @return TRUE - when the feature counts is > min
+
+contrib <- function(feat,insts,senses,min){
+  featline <- unlist(strsplit(feat, "\t"))
+  feature <- featline[1]
+  chisq <- featline[2]
+  fcnts <- featline[3:length(featline)] # the counts each sense
+  obs <- as.numeric(fcnts)
+  if(sum(obs) <= min)
+    return(FALSE)
+  print(paste(feature, " ", chisq))
+  print(paste("Frequency: ", sum(obs), " occurrences", sep=""))
+  tot <- sum(insts)
+  percts <- insts/tot
+  ftot <- sum(obs)
+  exp <- percts * ftot
+  diffs <- obs - exp
+  chi <- round(diffs * diffs / exp, 3)
+  res <- rbind(senses,insts,fcnts,chi)
+  print(res)
+  return(TRUE)
+}
+```
+
+##### Step 04: Selecting What to Examine {#step04}
+With the scripts above, it next becomes easy to examine any of the almost 32,000 combinations of the corpus, preposition, word-finding rule, and feature extraction rule. In addition, specifying the minimum frequency can be used to adjust the results to ensure that there is an appropriate set of feature counts. Below, we show three possibilities. In the first two, we examine two ways of looking the complement's part of speech for the syntactic (**c**) and the heuristic (**hr**) features. We are attempting to examine whether there is some significant difference between the methods. In this situation, we see that the two tables are quite similar, where the parts of speech do not explain the differences from the two methods. In the third examination, we change the corpus from the OEC to the CPA corpus (using the heuristic (**hr**) feature), seeing that there are several differences that need to be explained.
+```{r}
+chiFiles <- corp("oec")
+print("OEC")
+fanal("above","hr","pos",4)
+fanal("above","c","pos",4)
+
+chiFiles <- corp("cpa")
+print("CPA")
+fanal("above","hr","pos",4)
+```
+
+##### Step 05: Interpreting Feature Results {#step05}
+Each set of results will require the characterizations. Examination of the results is similar to what would be done by a lexicographer. The first thing that we look is whether the number of counts are sufficient. In this case, all three of the results are sufficient, although the number of 7 occurrences for **hr:pos:nnp** in the CPA corpus needs further; the question is why there is such a distinctive difference.
+
+The next thing that we examine is which of the senses have the largest contribution to the total chi-square. We see that sense "3(1b)" (_higher than and to one side of_) has a larger number of proper nouns, named places. We also see that sense "5(2a)" (_higher in grade or rank than_) has a large number of **hr:pos:prp**, personal pronouns.
+
+We also note that **hr:pos:dt** (a determiner) is significant for sense ("10(n)"), (_more so than anything else_), which corresponds to the idiom _above all_. For **hr:pos:cd** (a cardinal number), sense ("9(3)") (_higher than (a specified amount, rate, or norm)_).
+
+In this analysis, we have indicated that the sense is the one that has the most proportion of the chi-square. These results correspond to intuition. However, this is not always the case. We have seen some situations where a zero or one occurrence has the largest contribution to the chi-square, i.e., because the **infrequency** is distinctive.
+
