@@ -3,6 +3,10 @@
 ## Status of Substitutions
 PDEP contains a field **Substitutable Prepositions** for each sense. The status of this field for the senses has been extracted for further analysis.
 
+- **sense-subs.csv**: This files was generated from the PDEP MySQL database with _select prep, sense, opreps from prepprops_. This file consists of a line for each sense in PDEP, consisting of the preposition name, the PDEP sense number, and the value in the Substitutable Prepositions field (_opreps_).
+
+- **prepcnts.csv**: This file was generated from the PDEP MySQL database with _select prep, count(*) from prepdefs group by prep_. This file consists of the number of senses for each preposition.
+
 - **prep-opreps.csv**: This file has been generated from SQL PDEP database with _select prep, sense, opreps from prepprops where opreps <> ""_. That is, this file consists of the preposition, the sense number, and the substitutable prepositions where this field is not empty.
 
 - **prep-no-opreps.csv**: This file has been generated from SQL PDEP database with _select prep, sense, opreps from prepprops where opreps = ""_. That is, this file consists of the preposition and the sense number where this field is empty.
