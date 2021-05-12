@@ -1,0 +1,118 @@
+---
+title: "Substitutable Prepositions"
+author: "Ken Litkowski"
+date: "4/25/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Sense Similarity for Substitutable Prepositions
+
+The object of analyzing substitutable prepositions (SPs) is to collapse senses so that ambiguity or polysemy among prepositions is minimized. PDEP has a field for **Substitutable Prepositions** for each sense. Substitutes are identified for 778 of the 1039 senses in PDEP. When these substitutions were developed, there was no intention to subject them to a rigorous analysis. With the addition of correspondence analysis, several avenues of investigation arise. (See Litkowski[^litk] for current work.)
+
+There are three components to the analysis: (1) assuring the [integrity of the substitutable prepositions field](#spexam), (2) using [correspondence analysis](#ca4subs) to identify which sense to use when a substitutable has multiple senses, and (3) hierarchize and graph the senses into a [digraph](#subdig).
+
+### Examining the Substitutable Prepositions {#spexam}
+
+Analyzing the substitutions iterates through the PDEP senses[^ssubs]. The script counts six items and notes three lists that will be used in further analysis. 
+
+- **Number of senses**: The main loop in the script increments the count of the number of senses (_nsenses_). With each iterate, the preposition (_prep_) and sense (_sense_) are recorded.
+- **Senses with substitutions**: The first test for a sense is to determine whether it has a non-empty string the Substitutable Prepositions field. The script increments the count of the senses with substitutions (_wsub_). When a sense has substitutions, the string in the field is split using a slash ("/") and then iterates over each posited substitution. We test whether each substring is a preposition (_good_ is TRUE) and whether the substrings constitute synonyms (_syn_ is TRUE). We also check whether each substring is a preposition that has only one sense (i.e., the preposition is monosemous). After iterating through the substrings, we can conclude something about the preposition substitutions and enter data into one of the lists.
+- **Senses with non-preposition strings**: If a string is not in the preposition list, we set _good_ and _syn_ to FALSE. When _good_ is FALSE, we increment the without all good prepositions (_senwogood_) counter and add the sense to the list of bad substitutions (_badsubs_). The substitutions field needs correction so that all correspond to prepositions. For example, _about 3(2)-1_ has a substitution _round (Brit)_; the parenthetical needs to be removed so that the further analysis can be performed correctly. There are 156 senses that fall into this category.
+- **Non-preposition strings**: Some senses have more than one non-preposition substring. There are 170 such cases; i.e., 14 senses have multiple non-preposition substrings (_nonprepsub_). These cases will already be included in the list of bad substitutions (_badsubs_).
+- **Sense with synonymic substitutions**: When _syn_ is still TRUE, we make an initial judgment that the substitution(s) are synonym(s) with the sense. For example, _by reason of 1(1)_ has the substitutions "because of/owing to/on account of". In this case, every substitution has only one sense in the PDEP entry. This is defeasible, but is initially plausible. There are 58 senses for which this is the case. When this is the case, the counter _synpreps_ is incremented and the sense is added to the list of synonyms (_fullsyns_)
+- **Senses without substitutions**: When the initial test for the substitutions failed, a sense had no substitutions. The lexicographer in TPP did not identify the sense of the substitutions. This is incremented in _wosubs_ and added to the list in _nosubs_. There are 261 senses with no substitutions. This analysis includes procedures intended to identify the specific sense(s), particularly below in the locating of these senses in the preposition digraph analysis below.
+
+[^litk]: Litkowski, Ken. (2020, December). Preposition Analysis Using Correspondence Analysis. Working Paper 20-02. Damascus, MD: CL Research. (See http://www.clres.com/online-papers/ca4pdep.pdf, the working paper at https://www.overleaf.com/read/vzrkqvpdhxpc, and the GitHub development at https://github.com/kenclr/ca4pdep.)
+
+[^ssubs]: At the GitHub development at https://github.com/kenclr/ca4pdep, in the file at _/data/subs/sense-subs.csv_.
+
+```{r}
+setwd("C:/Research/GitHub/ca4pdep/data/subs")
+df <- read.csv("prepcnts.csv", header=TRUE)
+sdf <- read.csv("sense-subs.csv", header = TRUE)
+nsenses <- 0 # number of senses in PDEP
+wsubs <- 0 # number of senses that have substitutable prepositions
+wosubs <- 0 # number of senses without substitutable prepositions
+nosubs <- data.frame()
+senwogood <- 0 # substitutables that are not prepositions
+badsubs <- data.frame()
+#badsubs <- rbind(badsubs,sdf[3,])
+#badsubs <- rbind(badsubs,sdf[10,])
+#print(badsubs)
+nonprepsub <- 0 # substitutables that are not prepositions
+synpreps <- 0 # full synonymy senses
+fullsyns <- data.frame()
+for(i in 1:nrow(sdf)){
+  nsenses <- nsenses + 1
+  prep <- sdf[i,"prep"]
+  sense <- sdf[i,"sense"]
+  if(nchar(sdf[i,"opreps"])>0){
+    wsubs <- wsubs + 1
+    subs <- strsplit(sdf[i,"opreps"], "/")[[1]]
+    good <- TRUE
+    syn <- TRUE
+    for(j in 1:length(subs)){
+      sub <- subs[j]
+      if(sub %in% df$prep == FALSE){
+        nonprepsub <- nonprepsub + 1
+        if(nonprepsub < 6)
+          print(paste("Not sub in '",prep,"': ",sense, " for '",sub, "'",sep=""))
+        good <- FALSE
+        syn <- FALSE
+        next
+      }
+      cnt <- df[df$prep == sub,]["cnt"]
+      if(df[df$prep == sub,]["cnt"] > 1)
+        syn <- FALSE
+    }
+    if(good == FALSE){
+      senwogood <- senwogood + 1
+      badsubs <- rbind(badsubs,sdf[i,])
+    }
+    if(syn == TRUE){
+      synpreps <- synpreps + 1
+      fullsyns <- rbind(fullsyns,sdf[i,])
+      if(synpreps < 6)
+        print(paste("Syns for '",prep,"': ",sense, " - '",sdf[i,"opreps"], "'",sep=""))
+    }
+  }
+  else{
+    wosubs <- wosubs + 1
+    nosubs <- rbind(nosubs,sdf[i,])
+    if(wosubs < 6){
+      print(paste("No subs for '",prep,"': ",sense,sep=""))
+    }
+  }
+}
+print(paste("Number of senses:",nsenses,"having",wsubs,"with subs and",wosubs,"without subs", sep=" "))
+#print(nosubs)
+print(paste("Full synonyms:",synpreps))
+#print(fullsyns)
+print(paste("Senses containing bad sub:",senwogood))
+#print(badsubs)
+#print(paste("  Size of badsubs: ",dim(badsubs)[1]))
+print(paste("Non preposition substitutables:",nonprepsub))
+```
+
+### Correspondence Analysis to Identify Substitution Senses {#ca4subs}
+
+There are 778 senses to be subjected to correspondence analysis.
+
+### Digraph after Substitutional Prepositions {#subdig}
+
+```{r}
+#The file GraphViz.zip contains 21 *.dot files that can be applied
+#   to the GraphViz dot.exe executable that will generate (di)graphs.
+#   These files are simply text files that can be used to identify 
+#   the location of the PDEP senses in the definitional hierarchy.
+#library(DiagrammeR)
+#setwd("C:/Research/GitHub/ca4pdep/data")
+#grViz("Target.dot")
+```
+
+```{r}
+```
