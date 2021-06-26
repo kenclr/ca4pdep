@@ -1,0 +1,165 @@
+---
+title: "Accessing Online PDEP Feature Files"
+author: "Ken Litkowski"
+date: "2021-06-21"
+output: html_document
+---
+
+# Online PDEP Feature Files
+The paper "Preposition Feature Analysis Using Correspondence Analysis"[^litk] describes many procedures using correspondence analysis of preposition features. The analyses make use of features generated in parsing three corpora containing over 81,000 sentences. The feature files are contained in 1.2 GB. The analyses have been performed on my computer, but are also available online. This discussion describes how to use the online features, primarily using the appropriate online directory.
+
+[^litk]: Litkowski, Ken. (2020, December). Preposition Analysis Using Correspondence Analysis. Working Paper 20-02. Damascus, MD: CL Research. (See http://www.clres.com/online-papers/ca4pdep.pdf, the working paper at https://www.overleaf.com/read/vzrkqvpdhxpc, and the GitHub development at https://github.com/kenclr/ca4pdep.)
+
+## The PDEP Corpora
+Details of the three corpora are provided in [The Preposition Project Corpora](https://www.clres.com/online-papers/TPPCorpora.pdf)[^corp]. The first corpus is characterized as the FrameNet corpus (**FN**), with 26739 sentences; this was begun in 2005. The second corpus contains sentences in Oxford University Press, as the Oxford English Corpus (**OEC**), where are example instances used for preposition senses; there are 7485 sentences in this corpus. The third corpus was developed from the British National Corpus, selecting representative examples for each preposition; there are 47285 sentences, in an attempt to follow principles of the Pattern Dictionary of English Verbs (**CPA**).
+
+### The PDEP Feature Files
+The online feature files are contained in 580 files totally 1.2 GB of almost 96 million features.[^files] To access a file, we specify the online directory and the desired preposition. The directories in **fdir** indicate that permission is not accessible to the folder. When a preposition is added to the directory, i.e., to the feature file for the specified corpus and preposition, you will not likely be able to see it in a browser because it contains so many features (e.g., _above_ in _CPA_ has 313,082 features). You will be able to download the file if you desire.
+
+[^files]: CPA (58,423,195 features in 264 files); FN (26,927,378 features in 57 files); OEC (10,392,966 features in 259 files); Total: 95,743,539 features.
+
+```{r}
+#' Set the directory location for the online feature corpus
+#' 
+#' @param loc the active corpus ("oec", "cpa", or "fn")
+#'
+#' @return the directory to use
+#' @examples
+#' fdir("cpa")
+fdir <- function(loc){
+  if(loc == "oec")
+    fcorp <- "http://www.clres.com/db/feats/oec/"
+  else if(loc == "cpa")
+    fcorp <- "http://www.clres.com/db/feats/cpa/"
+  else if(loc == "tpp")
+    fcorp <- "http://www.clres.com/db/feats/fn/"
+  return (fcorp)
+}
+fdir("cpa")
+```
+
+### A Feature Cross-Tabulation
+The function **getfeat** creates a table, using a corpus, a preposition, and a feature. It returns the table of sense numbers by the feature values.
+
+The specified file is read into a location consisting of each line in the file, corresponding to the features generated in parsing a sentence for a specified preposition. Each line contains an instance number, the preposition sense, and all the features. (E.g., for _above_ in _CPA_, there are 250 sentences with 313,082 features, an average of 1252 features for each sentence.) The function iterates through each sentence, splitting the line using "\30" as demarcating the features (into the variable **feats**).
+
+The second feature of **feats** is the sense number (**snum**), used to identify the row for the table. We next use the argument feature (**feat**) as the basis for searching **feats** to find all features beginning with the specified feature as a regular expression. The result of this search is set to **mat**; it is a list of the feature locations in **feats**. If this list has a length 0, i.e., the feature does not occur in this sentence, we continue to the next sentence. With a non-zero length of **mat**, we iterate over the list, using **j**. We get the string for the item (**feats[[1]][mat[j]]**) and get the feature value at **val**.
+
+The combination of the sense number (**snum**) and the feature value (**val**) provide the cell location for the data frame. Basically, the count of the cell is incremented. The data frame starts as an empty table. When there is no initial count for the cell, it is initialized to 1, at the same time establishing the sense number and/or the feature value as an existing cell. After all sentences have been processed, the data frame has only non-zero entries, with "NA" ("not available") for the other cells. We examine each cell and set the count of "0" for each cell with a value "NA". The resultant data frame is returned from the function.
+
+```{r}
+#' Creates the cross-tabulation for the feature of the preposition in a corpus
+#'  The table counts the number of each feature value by the preposition sense
+#'
+#' To obtain  
+#' @param corp - the active corpus ("oec", "cpa", or "fn")
+#' @param prep - a preposition in the corpus
+#' @param feat - a feature, consisting of a word-finding rule, a colon, a feature-extracting rule, and a colon (which obtains the feature's values)
+#' @param df - initialize a data frame, if not specified
+#'
+#' @return a cross-tabulation of sense numbers by feature values
+#'
+getfeat <- function(corp,prep,feat,df=data.frame()){
+  folder <- fdir(corp)
+  addr <- paste(folder,prep,sep="")
+  ffile <- read.delim(addr, header=FALSE)
+  for(i in 1:dim(ffile)[1]){
+    inst <- ffile[i,]
+    feats <- strsplit(inst,"\30")
+    snum <- feats[[1]][2]
+    if(!length(mat <- grep(feat, feats[[1]])))
+      next
+    for(j in 1:length(mat)){
+      val <- substring(feats[[1]][mat[j]],nchar(feat)+1)
+      if(!val %in% colnames(df) && snum %in% rownames(df))
+        df[snum,val] <- 1
+      else if(!snum %in% rownames(df))
+        df[snum,val] <- 1
+      else if(is.na(df[snum,val]))
+        df[snum,val] <- 1
+      else
+        df[snum,val] <- df[snum,val] + 1
+    }
+  }
+  for(i in rownames(df))
+    for(j in colnames(df)){
+      if(is.na(df[i,j]))
+        df[i,j] <- 0
+    }
+  return (df)
+}
+#getfeat("cpa","above","hr:pos:")
+```
+
+[^corp]: Litkowski, Ken. (2013). The Preposition Project Corpora. Working Paper 13-02. Damascus, MD: CL Research. (https://www.clres.com/online-papers/TPPCorpora.pdf)
+
+## Properties of Contingency Tables
+The data frame for any corpus, preposition, and feature may not be ideal for further discussion. The **getfeat** function generates the data in the order it occurs for the sense numbers and the feature values. In addition, there may be some adjustments to the tables that might be desired.
+
+For purposes of discussion, we first create data frames for the part of speech of the heuristic complements of _above_ for the _CPA_ and _OEC_ corpora. For the CPA corpus, there are 173 sentences examining 240,117 features. The OEC table contains only 167 parts of speech. For the CPA corpus, there are 250 sentences examining 313,082 features. The CPA table counts only 247 parts of speech, indicating that 3 sentences did not have this feature. In addition, this corpus has a sense number "x" and also has a sense "10(n)", not present in the OEC corpus.
+
+There are several types of changes to the tables that may enable discussion. None of these changes affect the content of the table, unless they may be part of any analysis.
+
+- Alphabetizing the feature values: Feature values are simply strings. Ordering/sorting the values may suggest further modifications to the tables.
+```{r}
+dfopos <- getfeat("oec","above","hr:pos:")
+dfopos
+dfopos <- dfopos[,order(names(dfopos))] # orders the column names
+dfopos
+```
+
+- Transposing the table (feature values by sense numbers): Most (277 of the 304) prepositions have fewer than 10 senses, while some features may have hundreds of values (e.g., synonyms or hypernyms), so that it is easier to view a table with the sense numbers as the column names.
+```{r}
+dfoln <- getfeat("oec","above","hr:ln:")
+t(dfoln)
+```
+- Deleting non-desired rows or columns: Some sentences do not constitute preposition instances. In the CPA corpus, some instances were marked at "x" (non-preposition) or "pv" (phrasal verbs). In the FN corpus, some instances were marked as adverbs or phrases. Rows or columns can be deleted by listing only the desired rows or columns. In the example, the parts of speech for the complement of "around" in the FN corpus, we delete non-preposition instance, order the column names, delete serveral columns, and reorder the sense numbers.
+```{r}
+dffpos <- getfeat("tpp","around","hr:pos:")
+dffpos
+dffpos <- dffpos[c(1:3,5,7,9),]
+dffpos
+dffpos <- dffpos[,order(names(dffpos))]
+dffpos
+dffpos <- dffpos[,c(4:7,9,11)]
+dffpos
+dffpos <- dffpos[c(4,6,2,3,5,1),]
+dffpos
+```
+- Combining rows or columns that are very similar: In the previous example, we note that there is one instance for a plural proper noun ("nnps"). We can combine the two proper noun and then delete the plural proper noun column. 
+```{r}
+dffpos[,"nnp"] <- dffpos[,"nnp"] + dffpos[,"nnps"]
+dffpos$nnps <- NULL
+dffpos
+```
+- Deleting rows or columns that small marginal counts: When a feature or a sense has a small count, it may be useful to delete rows or columns that would be otherwise make it confuse an analysis. Frequently, in identifying significant features for a chi-square analysis, a minimum count is specified. In the examples below, there are 40 possible values of WordNet lexical names (removed to 7) or 405 hypernyms in the Oxford Dictionary of English noun hierarchy (removed to 13).
+
+```{r}
+# WordNet lexical name
+dfcln <- getfeat("cpa","above","hr:ln:")
+dfcln <- t(dfcln)
+# removing the sense "x"
+dfcln <- dfcln[,c(1:4,6:11)]
+del <- c()
+for(i in 1:dim(dfcln)[1]){
+  if(sum(dfcln[i,]) < 30)
+    del <- append(del,i)
+}
+del
+dfcln[-del,]
+
+# Oxford Dictionary of English noun hierarchy
+dfco <- getfeat("cpa","above","hr:o:")
+dfco <- t(dfco)
+# removing the sense "x"
+dfco <- dfco[,c(1:4,6:11)]
+del <- c()
+for(i in 1:dim(dfco)[1]){
+  if(sum(dfco[i,]) < 10)
+    del <- append(del,i)
+}
+dim(dfco)[1]
+dfco[-del,]
+```
+
+### Ordering the Feature Values
